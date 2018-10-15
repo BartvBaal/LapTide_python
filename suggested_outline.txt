@@ -1,0 +1,33 @@
+
+-> Use legendre.py to plot first 3 solutions for each m = {1,..5}.
+
+-> Write a root-solving function (bisection) that solves for lambda = l*(l+1)
+   given:
+     (m, [lam_lo, lam_hi], odd_even)
+   Numerical Recipes in C++ is a good resource.
+
+-> Extend legendre_t in legendre.py to solve Laplace's Tidal equation. Perform
+   the same P = (1 - x^2)^\alpha transformation here. Use q=0, and associated
+   Legendre polynomails to check if your new ODE is still good.
+
+-> Write a module that contains the assymptotive approximations for \lambda (q)
+   for each of the modes. Extend this function general, so that it can work out
+   the mode type and whether it is odd/even from only the inputs: (m, k).
+
+-> Plot Figure 3. in Townsend (2003a) (the eigenfunctions), using the assymptotic
+   approximation for the eigenvalues in the paper. Note: possible concern
+   with using q < 0.
+
+-> Adjust the root-solving function that solves for lambda given:
+     (m, q, k, [lam_lo, lam_hi])
+   You can use one of the previous excercises to work out if the mode is odd
+   or even.
+
+-> Plot Figure 1. in Townsend (2003a), (the eigenvalues), and compare to
+   assymptotic solutions
+
+-> using ranges: m={1,..5}, q={0, 1, 3, 6, 10}, solve for:
+   -> first 3 g-modes
+   -> Yanai mode
+   -> first 3 r-modes
+

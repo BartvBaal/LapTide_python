@@ -1,14 +1,14 @@
 
 -> Use legendre.py to plot first 3 solutions for each m = {1,..5}.
 
--> Write a root-solving function (bisection) that solves for lambda = l*(l+1)
+-> Write a root-solving function (bisection) that solves for lambda (= l*(l+1))
    given:
      (m, [lam_lo, lam_hi], odd_even)
    Numerical Recipes in C++ is a good resource.
 
 -> Extend legendre_t in legendre.py to solve Laplace's Tidal equation. Perform
-   the same P = (1 - x^2)^\alpha transformation here. Use q=0, and associated
-   Legendre polynomails to check if your new ODE is still good.
+   the same P = (1 - x^2)^\alpha transformation here. To check if your new ODE is
+   still good, use q=0 and associated Legendre polynomails .
 
 -> Write a module that contains the assymptotive approximations for \lambda (q)
    for each of the modes. Extend this function general, so that it can work out

@@ -35,7 +35,7 @@ def rootfinder(m, lamlist, is_even):
        function as rootfinding works on the first specified parameter"""
     lamlow, lamhigh = lamlist
     return optimize.bisect(alt_shoot, lamlow, lamhigh, args=(m, is_even), full_output=True)
-#TODO: use class with rootfinder
+#TODO: use class with rootfinder / add straddler function
 
 """
 Note about the rootfinder ^:
@@ -79,6 +79,8 @@ def multi_rootfind(m, qlist, lamlist, is_even):
             lamlist = [root-(1000*shift*diff), root+(1000*shift*diff)]
         else:
             lamlist = [root+diff, root+(1+(10*shift))*diff]
+
+#        Old code here as backlog for now
 #        try:
 #            root = rootfinder_laplace(m, q, lamlist, is_even)[0]
 #        except:
@@ -100,9 +102,6 @@ def multi_rootfind(m, qlist, lamlist, is_even):
         found_lamlist.append(root)
         print q, root, "checking", diff, lamlist
 
-#    plt.plot(qlist, found_lamlist)
-#    plt.yscale('log')
-#    plt.show()
     found_lamlist = np.asarray(found_lamlist, dtype=float)
     return qlist, found_lamlist
 
@@ -120,7 +119,7 @@ def fullrange_multi_rootfind(m, qlists, lvals, townsendcomp=False):
         for l in lvals:
             k = l - np.abs(m)
             is_even = LaPlace.check_is_even(m, k)
-            lamlist = [l*(l-.5025), l*(l+2.5)]
+            lamlist = [l*(l-.5025), l*(l+2.5)]  # Magic starting point <- BAD
 
             print is_even
 
@@ -134,14 +133,14 @@ def fullrange_multi_rootfind(m, qlists, lvals, townsendcomp=False):
 
 ## -------------------------------------------------------------------------- ##
 
-def plot_coeffs (m, q, lam, is_even):
+def plot_coeffs (f, m, q, lam, is_even):
     """Plot the coefficients of ODE at set of even points"""
 
 #    leg = Legendre.ODE_t(m, lam)
     lap = LaPlace.ODE_t(m, q, lam)
 
     N = 21
-    steps = np.linspace(Legendre.t0, Legendre.t1, N)[1:-1]
+    steps = np.linspace(LaPlace.t0, LaPlace.t1, N)[1:-1]
     coeffs = lap.coeffs(steps)
 
     f, axarr = plt.subplots(nrows=2, ncols=2, sharex=True)
@@ -175,7 +174,7 @@ def plot_interp (m, q, lam, is_even, N):
 #    legendre_solver = Legendre.solver_t(m, is_even)
     laplace_solver = LaPlace.solver_t(m, q, is_even)
 
-    steps = np.linspace(Legendre.t0, Legendre.t1, N)
+    steps = np.linspace(LaPlace.t0, LaPlace.t1, N)
     [P, Q] = laplace_solver.interp(lam, steps)
 
     f, axarr = plt.subplots(2, sharex=True)
@@ -185,67 +184,6 @@ def plot_interp (m, q, lam, is_even, N):
 
 ## -------------------------------------------------------------------------- ##
 
-def asymptotic_plotting():
-    """
-    Plots the asymptotic functions to the Laplace Tidal Equations
-    Solid lines for second order, dashdotted line for the first order
-    """
-#    l_eq_39 = lambda m, s, q : ( (m*q - m**2) / (q * (2.*s + 1.)) )**2  # < Need to update this to 2nd order term
-#    l_eq_40_41 = lambda m, q : (q - m)**2
-
-    eq38_fst = lambda m, s, q : (q**2) * ((2.*s + 1.)**2)
-    eq38_snd = lambda m, s, q : (q**2) * ((2.*s + 1.)**2) - ( 2. * (m*q - m**2) )
-
-    eq40 = lambda m, q : (q - m)**2
-
-    eq55 = lambda m, q : (m**2) * 2.*m*q / (2*m*q + 1.)
-
-    ## q > condition statement (eg q>1 for g_mode)
-    g_mode_cond = np.abs(1)
-    r_mode_cond = lambda m, s : ((2.*s + 1.)**2 + m**2) / np.abs(m)  # paper mistake in 2s+1 term
-    k_mode_cond = lambda m : np.abs(3. / m)
-    #y_mode_cond = lambda m, q : (m*q < m**2 and m*q > 0) ? r_mode_cond(m, 0) : g_mode_cond
-
-    m = -2
-    qneg = np.linspace(-10, 0, 10000)
-    qpos = np.linspace(0, 10, 10000)
-
-    plotting.plot_function(eq38_fst, [m, 1], qneg, [np.abs(qneg)>1.], "blue", "-.")
-    plotting.plot_function(eq38_snd, [m, 1], qneg, [np.abs(qneg)>1.], "blue", "-")
-    plotting.plot_function(eq38_fst, [m, 1], qpos, [np.abs(qpos)>1.], "purple", "-.")
-    plotting.plot_function(eq38_snd, [m, 1], qpos, [np.abs(qpos)>1.], "purple", "-")
-    plotting.plot_function(eq38_fst, [m, 2], qneg, [np.abs(qneg)>1.], "red", "-.")
-    plotting.plot_function(eq38_snd, [m, 2], qneg, [np.abs(qneg)>1.], "red", "-")
-    plotting.plot_function(eq38_fst, [m, 3], qneg, [np.abs(qneg)>1.], "orange", "-.")
-    plotting.plot_function(eq38_snd, [m, 3], qneg, [np.abs(qneg)>1.], "orange", "-")
-    plotting.plot_function(eq40, [m], qpos, [np.abs(qpos)>1.], "green", "-")  # its effecitvely a gmode constraint
-    plotting.plot_function(eq55, [m], qpos, [np.abs(qpos)>np.sqrt(3/(-m*qpos))], "cyan", "-")
-    plt.yscale('log')
-##    plt.plot(left[left < -2.5], test_40_s0_l, color="red", label="40")
-#    plt.plot(right, test_40_s0_r, color="green", label= "40")
-#    plt.plot(right, test_55_s1_r, color="cyan", label="55")
-#    plt.plot(left, test_38_s3_l, color="orange", label="38, s=3")
-#    plt.plot(left, test_38_s2_l, color="yellow", label="38, s=2")
-##    plt.plot(left[left < -6.], test_39_s1_l, color="black", label="39, s=1")
-#    plt.yscale('log')
-#    plt.legend(fontsize=16, frameon=True, fancybox=True, edgecolor="#000066")
-#    plt.xlim([-10, 10])
-
-def numerics_plotting():
-    """
-    Plots a dotted line for the loaded numerics values
-
-    TODO; pass on a folder or conditions on how to load multiple plot_from_files
-    """
-    plotting.plot_from_file("Numerics/Townsend2003/range_0.0_10.0_steps_952_kval_0.txt", "black", "--")
-    plotting.plot_from_file("Numerics/Townsend2003/range_0.0_10.0_steps_952_kval_1.txt", "black", "--")
-    plotting.plot_from_file("Numerics/Townsend2003/range_0.0_10.0_steps_952_kval_2.txt", "black", "--")
-    plotting.plot_from_file("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_0.txt", "black", "--")
-    plotting.plot_from_file("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_1.txt", "black", "--")
-    plotting.plot_from_file("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_2.txt", "black", "--")
-    plt.yscale('log')
-
-## -------------------------------------------------------------------------- ##
 
 def main ():
 #    Relic from initial setups; need to look if this reworking setup requires this
@@ -271,10 +209,7 @@ def main ():
 #    print "Using old root:"
 #    print "Residual at {}: {}\n".format(Legendre.t1, shoot(m, lam, is_even))
 
-    ## Works for m=1 setup - need to generalize this (ask Frank how is_even changes & how to make decent guesses for lambda)
-    ## Could always start in q = 0 point since Legendre polynomials have known lambda
-    ## Need to check what lambda does for negative m though - still l(l+1)?
-    ## Also; k = l-|m| and Townsend uses k for different wave modes
+    # k = l-|m| and Townsend uses k for different wave modes
     k = l - np.abs(m)
     is_even = LaPlace.check_is_even(m, k)
     lamlist = [30, 100]
@@ -298,8 +233,8 @@ def main ():
 #    fullrange_multi_rootfind(m, qlists, lvals, townsendcomp=True)  # Mostly for plotting functionality
 #    fullrange_multi_rootfind(m, [np.linspace(0, -10, 9.5e2+1)], [4])  # Testing just for k=2, negative part
 
-    asymptotic_plotting()
-    numerics_plotting()
+    plotting.asymptotic_plotting()
+    plotting.numerics_plotting()
     plt.xlim([-10, 10])
     plt.ylim([.1, 6800])  #6800 works for this setup
     plt.title("Asymptotic first and second order versus numerical solutions")

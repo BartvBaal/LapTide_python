@@ -1,13 +1,13 @@
-"""Solve ODE defining the Associated Legendre Polynomails:
+"""Solve ODE for LaPlace Tidal Equations:
 
-  (1 - x^2) \diffrac{f}{x} = 2 \alpha x f - g
-  (1 - x^2) \diffrac{g}{x} = \left( \lambda (1 - x^2) - m^2 \right) f + 2 \alpha x g
+  (1 - x^2) \diffrac{f}{x} = (a*alpha*x + m*q*x) * f + (q^2 * m^2 - 1) * g
+  (1 - x^2) \diffrac{g}{x} = (2*alpha*x - m*q*x) * g + (lambda*(1-x^2) - m^2)*f
 
 with
 
   P = (1 - x^2) f
   Q = (1 - x^2) g
-  Q = - \diffrac{}{x} \left( (1 - x^2) P \right)
+
 
 to avoid singularity and implement boundary condition at \pm 1"""
 
@@ -52,15 +52,19 @@ def eigval (l):
 
 class ODE_t:
     """Return RHS of ODE, and helpful functions for transformation"""
-    def __init__ (self, m, lam):
+    def __init__ (self, m, q, lam):
         self.m = 1. * m
+        self.q = 1. * q
         self.msq = m*m
+        self.qsq = q*q
+
         self.alpha = .5 * abs(self.m)
         self.lam = 1. * lam
 
     def init_y (self):
         y0 = 1.0e-4
-        return [y0, 2. * self.alpha * t0 * y0]  # Starting point, probably RHS of eq (10)
+        y1 = (2 * self.alpha + self.m * self.q)*t0*y0/(1 - t0*t0*self.qsq)
+        return [y0, y1]  # Starting point, variation of RHS of eq (10)
 
     def coeffs (self, t):
         sinsq = 1. - t*t
@@ -71,8 +75,11 @@ class ODE_t:
     # Comments show what variables are called in legendre-ode_derivation.pdf
         sinsq = 1. - t*t  # 1-(x**2)
         twoax = 2. * self.alpha * t  # 2*alpha*x
-        dy0dt = (twoax * y[0] - y[1] ) / sinsq  # eq (8), rewritten
-        dy1dt = self.lam * y[0] - (self.msq * y[0] - twoax * y[1]) / sinsq  # eq(9), rewritten
+        mqx = self.m * self.q * t  # m*q*x
+        qxsqmo = (self.qsq * t*t) - 1  # (x**2 * q**2) - 1
+        dy0dt = ( (twoax + mqx)*y[0] + qxsqmo*y[1] ) / sinsq  # eq (8), rewritten
+#        dy1dt = ( (self.lam*sinsq - self.msq)*y[0] + (twoax - mqx)*y[1] ) / sinsq
+        dy1dt = self.lam*y[0] - (self.msq*y[0] - (twoax - mqx)*y[1]) / sinsq  # eq(9), rewritten
         return [dy0dt, dy1dt]
 
     def transform (self, steps, solun):
@@ -86,10 +93,11 @@ def run_ode (leg, obs):
     # stepper = 'dopri5'
     stepper = 'dop853'
     atol = 0.
-    rtol = 1.0e-15
+    rtol = 1./(2**30)
+    nsteps = 2000
     y0 = leg.init_y()
     solver = ode(leg)
-    solver.set_integrator(stepper, atol=atol, rtol=rtol)
+    solver.set_integrator(stepper, atol=atol, rtol=rtol, nsteps=nsteps)
     solver.set_solout(obs)
     solver.set_initial_value(y0, t0)
     return solver.integrate(t1)
@@ -111,8 +119,9 @@ class score_t:
 
 class solver_t:
     """Shoot for x=0 from x=1-eps, can also save eigenvalues of solution"""
-    def __init__ (self, m, is_even):
+    def __init__ (self, m, q, is_even):
         self.m = m
+        self.q = q
         self.score = score_t(is_even)
 
     def set_m (self, m):
@@ -122,7 +131,7 @@ class solver_t:
         self.score.set_idx(is_even)
 
     def shoot (self, lam):
-        leg = ODE_t(self.m, lam)
+        leg = ODE_t(self.m, self.q, lam)
         obs = Observer.max_t()
         y1 = run_ode(leg, obs)
         return self.score(y1 / obs.max_f)
@@ -131,7 +140,7 @@ class solver_t:
         return self.shoot(lam)
 
     def save (self, lam):
-        leg = ODE_t(self.m, lam)
+        leg = ODE_t(self.m, self.q, lam)
         obs = Observer.save_t()
         run_ode(leg, obs)
         steps = obs.steps()

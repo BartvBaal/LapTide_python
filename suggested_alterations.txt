@@ -1,0 +1,30 @@
+As of 2018-12-06:
+
+Sometimes you use comments at the start of a function to describe what it does. This is exactly what you should do, but you do it as: "# this is the comment", I think python people prefer using triple quotes for documentation reasons. Maybe this is something to ask Tom about? This is just a taste thing though.
+
+I think you should start to think about file and folder structure a bit because things might start to get cluttered. You can make some header files that hold very general, widely used functions and put them in a source folder. Then perhaps make another folder for executable files? Files that actually implement a calculation and have an output.
+
+I think a useful tool might be one that can work out some mode properties given a (m, l) or (m, k), for instance: whether it is odd/even, type of mode (g, r, Kelvin, Yanai), the asymptotic approximation with q, location of the equatorial waveguide with q. I suggest writing a header that can work this out and implements the approximations - you could call this something like mode-admin.
+
+I think you should probably update
+
+To avoid confusion down the line I think the code should use either of l or k. At the moment both are used across the code, and it might be unclear when calling a function whether it takes one or the other. It's up to you which to use, my vote would be to only use k then have a function that can convert from a set (m, k) to the corresponding l. (You could do the other way around if you prefer l) .
+
+I'd like to see some more examples of the code in action! Particularly plotting eigenfunctions. Perhaps you could reproduce some of Townsend 03a's plots? Also making a 2D contour plot of the value of shoot(m, q, lam, is_even) over q, lam to see the location of the zeros. We should probably sit down and think of some other things we'd like to calculate as a sanity check and to prepare for adding the oblate parameter.
+
+* LaPlace.py
+  In the function ODE_t.init_y, you're missing the case of q=1. You should implement a condition here because the (1 - t0*t0*self.qsq) term will blow up.
+   
+  The ODE_t.coeffs function is written for the case of Legendre, I'd either update or delete it.
+
+* plotting.py
+
+  You have a few lambdas defined for the asymptotic solution, and I think you might be better off defining these as functions, perhaps in a new header to go with all the mode admin? Not sure if you need to have these as lambdas for plotting purposes.
+
+* run_legendre.py
+  
+  I think renaming this file might be a good idea!
+  
+  There are some erroneous headers here (seaborn and pandas). You probably shouldn't import them if you don't use them.
+  
+  The main function has a lot going on, mostly commented out. I suggest moving some of the commented out things to separate functions to make it clearer what they are doing.

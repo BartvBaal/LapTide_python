@@ -25,12 +25,12 @@ class polynomial_t:
 
 def main ():
 
-    fn = polynomial_t([-4.0, 2.0, -1.5, 1.0])
+    fn = polynomial_t([-4.0, 2.0, -1.5, 1.0, .5])
 
-    x_grid = np.linspace(-2, 3, 50)
+    x_grid = np.linspace(-4, 4, 70)
     f_grid = fn(x_grid)
 
-    inc = 1.0
+    inc = .1
     N_steps = 100
     straddle = straddle_t(fn, inc, N_steps)
 

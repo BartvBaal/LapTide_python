@@ -6,15 +6,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-from Straddle import straddle_t
-from Straddle import obs_print_t
+from helpers.Straddle import straddle_t
+from helpers.Straddle import obs_print_t
 
 
 class polynomial_t:
-    def __init__ (self, coeffs):
+    def __init__(self, coeffs):
         self.coeffs = coeffs
 
-    def __call__ (self, x):
+    def __call__(self, x):
         f  = 0.0
         xp = 1.0
         for ci in self.coeffs:
@@ -23,7 +23,7 @@ class polynomial_t:
         return f
 
 
-def main ():
+def main():
 
     fn = polynomial_t([-4.0, 2.0, -1.5, 1.0, .5])
 

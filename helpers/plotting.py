@@ -51,16 +51,20 @@ def asymptotic_plotting():
     plt.yscale('log')
 
 
-def numerics_plotting():
+def numerics_plotting(plotlist):
     """
-    Plots a dotted line for the loaded numerics values
-
-    TODO; pass on a folder or conditions on how to load multiple plot_from_files
+    Plots a dotted line for the numerics values files in plotlist
     """
-    plot_from_file("Numerics/Townsend2003/range_0.0_10.0_steps_952_kval_0.txt", "black", "--")
-    plot_from_file("Numerics/Townsend2003/range_0.0_10.0_steps_952_kval_1.txt", "black", "--")
-    plot_from_file("Numerics/Townsend2003/range_0.0_10.0_steps_952_kval_2.txt", "black", "--")
-    plot_from_file("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_0.txt", "black", "--")
-    plot_from_file("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_1.txt", "black", "--")
-    plot_from_file("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_2.txt", "black", "--")
+    for location in plotlist:
+        plot_from_file(location, "black", "--")
     plt.yscale('log')
+
+
+def townsend_plotting():
+    plotlist = ["Numerics/Townsend2003/range_0.0_10.0_steps_952_kval_0.txt", 
+    "Numerics/Townsend2003/range_0.0_10.0_steps_952_kval_1.txt", 
+    "Numerics/Townsend2003/range_0.0_10.0_steps_952_kval_2.txt", 
+    "Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_0.txt", 
+    "Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_1.txt", 
+    "Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_2.txt"]
+    numerics_plotting(plotlist)

@@ -15,18 +15,19 @@ def rootfinder_laplace(m, q, lamlist, is_even):
     return optimize.bisect(shoot_laplace, lamlow, lamhigh, args=(m, q, is_even), full_output=True)
 
 
-def straddlefinder(fn, x0, neg_allowed=False):
+def straddlefinder(fn, x0, verbose=False, neg_allowed=False):
     """
     For a given function fn and starting guess x0, it will look for a straddling
-    point through linear steps, always in the positive direction, and also in
+    point with log steps, always in the positive direction, and also in
     the negative direction if the neg_allowed argument is True.
 
-    Considering to change to logarithmic stepping to increase speed
+    Returns the points which straddle the root
     """
-    inc = 1.005  # qneg, k=2 will break if inc is too large!
+    ## qneg, k=3 still jumps at this inc rate (so need to make it smaller still? That slows down the code a lot :( )
+    inc = 1.0033  # qneg, k=2 will break if inc is too large!
     N_steps = 100
     straddle = Straddle.straddle_t(fn, inc, N_steps)
-    bisec = straddle.search_log(x0, neg_allowed=neg_allowed)
+    bisec = straddle.search_log(x0, verbose=verbose, neg_allowed=neg_allowed)
 
     return bisec
 
@@ -41,16 +42,26 @@ def multi_rootfind(m, l, qlist, is_even):
     
     Currently testing if this works for all previously known cases!
     Had to work in the neg_allowed searching for the k=2, qneg cases
+
+    Need to work the neg_allowed into the admin_mode settings because it's really not
+    that easy to determine when I should allow the code to look for decreasing solutions
+    (eg for m=2, qnegs are allowed to go negative?
+    NOTE; I **THINK** that m*q positive is only allowed postive searched)
+
+    Do note; the k=2 cases (m=-2, negative & m=2, positive) are still bumpy around |2.2|
+    for the current qlists - 9.5e2+1 but it breaks for 9.5e+2 => its still magic numbery
     """
     found_lamlist = []
     root = l*(l+.99)  # Initial guessing point, called "root" since that's what its called later
     neg_allowed = False
-    if qlist[-1] > 0:
+    verbose=False
+    if qlist[-1]*m < 0:
+        print "\nAllowing negatives\n"
         neg_allowed = True
 
     for q in qlist:
         fn = LaPlace.solver_t(m, q, is_even)
-        lamlist = straddlefinder(fn, root, neg_allowed)
+        lamlist = straddlefinder(fn, root, verbose, neg_allowed)
 
         root = rootfinder_laplace(m, q, lamlist, is_even)[0]
 

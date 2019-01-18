@@ -1,7 +1,7 @@
 # I think a useful tool might be one that can work out some mode properties given a (m, l) or (m, k), for instance: whether it is odd/even, type of mode (g, r, Kelvin, Yanai), the asymptotic approximation with q, location of the equatorial waveguide with q. I suggest writing a header that can work this out and implements the approximations - you could call this something like mode-admin.
 import numpy as np
 
-class mode_admin:
+class Mode_admin:
     def __init__(self, m, l):
         self.m = m
         self.l = l

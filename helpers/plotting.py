@@ -13,7 +13,7 @@ def plot_from_file(file_loc, color, ls):
     recon_qvals = np.linspace(float(splitstring[1]), float(splitstring[2]), float(splitstring[4]))
     plt.plot(recon_qvals, data, color=color, ls=ls)
 
-def asymptotic_plotting():
+def asymptotic_plotting(m):
     """
     Plots the asymptotic functions to the Laplace Tidal Equations
     Solid lines for second order, dashdotted line for the first order
@@ -34,9 +34,12 @@ def asymptotic_plotting():
     k_mode_cond = lambda m : np.abs(3. / m)
     #y_mode_cond = lambda m, q : (m*q < m**2 and m*q > 0) ? r_mode_cond(m, 0) : g_mode_cond
 
-    m = -2
-    qneg = np.linspace(-10, 0, 10000)
-    qpos = np.linspace(0, 10, 10000)
+    if m < 0:
+        qneg = np.linspace(-10, 0, 10000)
+        qpos = np.linspace(0, 10, 10000)
+    else:
+        qneg = np.linspace(0, 10, 10000)
+        qpos = np.linspace(-10, 0, 10000)
 
     plot_function(eq38_fst, [m, 1], qneg, [np.abs(qneg)>1.], "blue", "-.")
     plot_function(eq38_snd, [m, 1], qneg, [np.abs(qneg)>1.], "blue", "-")

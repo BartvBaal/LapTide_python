@@ -1,14 +1,8 @@
 #!/bin/bin/python
-
-import copy
-import random
-import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-
-from scipy import optimize
 
 import classes.Legendre as Legendre
 import classes.LaPlace as LaPlace
@@ -20,16 +14,19 @@ import helpers.plotting as plotting
 import helpers.sanity_plots as sanplot
 
 
-def fullrange_multi_rootfind(m, qlists, lvals, townsendcomp=False, saving=False):
+def fullrange_multi_rootfind(m, qlists, lvals, aympcompare=False, saving=False):
     """
     Does multi_rootfind per qlist in qlists, for all values of l
     Will save the data as part of the process so the plotting can be done
     much quicker in later times, if the saving argument is used
     Will plot a comparison to Townsend2003's asymptotic approximations if that
     argument is used, otherwise it will only plot the found solutions
+
+    Should replace the is_even check with the mode_admin setup I created
+    this will allow for more flexibility down the line with e.g. varying l *and* m
     """
-    if townsendcomp:
-        plotting.asymptotic_plotting()
+    if aympcompare:
+        plotting.asymptotic_plotting(m)
     for qlist in qlists:
         for l in lvals:
             is_even = LaPlace.check_is_even(m, l)
@@ -53,15 +50,15 @@ def main():
     m = int(sys.argv[1])
     l = int(sys.argv[2])
 
-    mode_admin = Property.mode_admin(m, l)
+    mode_admin = Property.Mode_admin(m, l)
     mode_admin.validate_values()
     is_even = mode_admin.is_even()
     k = mode_admin.get_k()
     wavemode = mode_admin.get_wavemode()
 
     # Currently have split qpos and qneg since I know lambda for q=0 but not q=-10 or 10
-    qneg = np.linspace(0, -10, 9.5e2+1)  
-    qpos = np.linspace(0, 10, 9.5e2+2)
+    qneg = np.linspace(0, -10, 9.5e2+4)
+    qpos = np.linspace(0, 10, 9.5e2+4)
 
     print is_even, k, wavemode
 
@@ -70,10 +67,10 @@ def main():
     qlists = [qneg, qpos]
     lvals = [2, 3, 4]  # k=0,1,2
 
-    fullrange_multi_rootfind(m, qlists, lvals, townsendcomp=True)  # Mostly for plotting functionality
-#    fullrange_multi_rootfind(m, [qneg], [4], townsendcomp=True)  # Testing just for k=2, negative part
+    fullrange_multi_rootfind(m, qlists, lvals, aympcompare=True)  # Mostly for plotting functionality
+#    fullrange_multi_rootfind(m, [qneg], [4], aympcompare=True)  # Testing just for k=-1, negative part
 
-#    plotting.asymptotic_plotting()
+#    plotting.asymptotic_plotting(m)
 #    plotting.townsend_plotting()
 #    plt.xlim([-10, 10])
 #    plt.ylim([.1, 6800])  #6800 works for this setup

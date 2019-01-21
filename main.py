@@ -14,29 +14,29 @@ import helpers.plotting as plotting
 import helpers.sanity_plots as sanplot
 
 
-def fullrange_multi_rootfind(m, qlists, lvals, aympcompare=False, saving=False):
+def fullrange_multi_rootfind(m, qlists, kvals, aympcompare=False, saving=False):
     """
-    Does multi_rootfind per qlist in qlists, for all values of l
+    Does multi_rootfind per qlist in qlists, for all values of k given in kvals
     Will save the data as part of the process so the plotting can be done
     much quicker in later times, if the saving argument is used
     Will plot a comparison to Townsend2003's asymptotic approximations if that
     argument is used, otherwise it will only plot the found solutions
 
     Should replace the is_even check with the mode_admin setup I created
-    this will allow for more flexibility down the line with e.g. varying l *and* m
+    this will allow for more flexibility down the line with e.g. varying k *and* m
     """
     if aympcompare:
         plotting.asymptotic_plotting(m)
     for qlist in qlists:
-        for l in lvals:
-            is_even = LaPlace.check_is_even(m, l)
+        for k in kvals:
+            is_even = LaPlace.check_is_even(m, k)
             print is_even
 
-            qlist, found_lamlist = roots.multi_rootfind(m, l, qlist, is_even)
+            qlist, found_lamlist = roots.multi_rootfind(m, k, qlist, is_even)
             plt.plot(qlist, found_lamlist, color="black", ls="--")
             if saving:
-                savestring = "Numerics/Townsend2003/range_"+str(qlist[0])+"_"+str(qlist[-1])+\
-                                "_steps_"+str(len(qlist))+"_kval_"+str(k)+".txt"
+                savestring = "Numerics/Townsend2003/range_{}_{}_steps_{}_kval_{}.txt"\
+                                    .format(qlist[0],qlist[-1],len(qlist),str(k))
                 np.savetxt(savestring, found_lamlist)
     plt.yscale('log')
     plt.show()
@@ -48,26 +48,26 @@ def main():
         raise RuntimeError("require m and l")
 
     m = int(sys.argv[1])
-    l = int(sys.argv[2])
+    k = int(sys.argv[2])
 
-    mode_admin = Property.Mode_admin(m, l)
+    mode_admin = Property.Mode_admin(m, k)
     mode_admin.validate_values()
     is_even = mode_admin.is_even()
-    k = mode_admin.get_k()
+    l = mode_admin.get_l()
     wavemode = mode_admin.get_wavemode()
 
     # Currently have split qpos and qneg since I know lambda for q=0 but not q=-10 or 10
     qneg = np.linspace(0, -10, 9.5e2+4)
     qpos = np.linspace(0, 10, 9.5e2+4)
 
-    print is_even, k, wavemode
+    print is_even, l, wavemode
 
 #    roots.multi_rootfind(m, l, qpos, is_even)  # Testing if the new function works
 
     qlists = [qneg, qpos]
-    lvals = [2, 3, 4]  # k=0,1,2
+    kvals = [0, 1, 2]  # k=0,1,2
 
-    fullrange_multi_rootfind(m, qlists, lvals, aympcompare=True)  # Mostly for plotting functionality
+    fullrange_multi_rootfind(m, qlists, kvals, aympcompare=True)  # Mostly for plotting functionality
 #    fullrange_multi_rootfind(m, [qneg], [4], aympcompare=True)  # Testing just for k=-1, negative part
 
 #    plotting.asymptotic_plotting(m)

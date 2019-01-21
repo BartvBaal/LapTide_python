@@ -2,23 +2,24 @@
 import numpy as np
 
 class Mode_admin:
-    def __init__(self, m, l):
+    def __init__(self, m, k):
         self.m = m
-        self.l = l
+        self.k = k
+        self.l = k + np.abs(m)
 
-    def get_k(self):
+    def get_l(self):
         """
         Sets self.k and returns it according to the following:
         k = l - np.abs(m)
         """
-        self.k = self.l - np.abs(self.m)
-        return self.k
+        self.l = self.k + np.abs(self.m)
+        return self.l
 
     def is_even(self):
         """
-        Check if m+l is even (True) or odd (False)
+        Check if m+k is even (True) or odd (False)
         """
-        if (self.m + self.l) % 2 == 0:
+        if (self.m + self.k) % 2 == 0:
             return True
         return False
 
@@ -26,13 +27,12 @@ class Mode_admin:
         """
         Returns the wavemode for the given parameters. #TODO; expand this to include all wavemodes
         """
-        if not self.k:
-            self.get_k()
-
-        if self.k == -2:
+        if self.k < -2:
             self.mode = "r mode"
+        elif self.k > 2:
+            self.mode = "g mode"
         else:
-            self.mode = "Cannot determine the other modes *just* from k & l ?"
+            self.mode = "Mode depends on Prograde/Retrograde spin"
         return self.mode
 
     def validate_values(self):

@@ -32,9 +32,11 @@ def straddlefinder(fn, x0, verbose=False, neg_allowed=False):
     return bisec
 
 
-def multi_rootfind(m, l, qlist, is_even):
+def multi_rootfind(m, k, qlist, is_even):
     """
-    does rootfinder_laplace for all values in q for a set m and l (and thus is_even)
+    Does rootfinder_laplace for all values in q for a set m and k (and thus is_even)
+    Currently calculates l from k and m; should pass in Property.Mode_admin()
+    since that will already come with a stored m, k and l.
     Takes a starting value of "root" just below the Legendre solution
     Then for every q in qlist, the function will look for the first straddle it
     can find, and pass the straddling list on to the rootfinder_laplace() function
@@ -48,9 +50,10 @@ def multi_rootfind(m, l, qlist, is_even):
     (eg for m=2, qnegs are allowed to go negative?
     NOTE; I **THINK** that m*q positive is only allowed postive searched)
 
-    Do note; the k=2 cases (m=-2, negative & m=2, positive) are still bumpy around |2.2|
+    Do note; the k=2 cases (m=-2, negative q & m=2, positive q) are still bumpy around |2.2|
     for the current qlists - 9.5e2+1 but it breaks for 9.5e+2 => its still magic numbery
     """
+    l = k + np.abs(m)
     found_lamlist = []
     root = l*(l+.99)  # Initial guessing point, called "root" since that's what its called later
     neg_allowed = False

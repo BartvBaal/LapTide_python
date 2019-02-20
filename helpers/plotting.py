@@ -13,6 +13,38 @@ def plot_from_file(file_loc, color, ls):
     recon_qvals = np.linspace(float(splitstring[1]), float(splitstring[2]), float(splitstring[4]))
     plt.plot(recon_qvals, data, color=color, ls=ls)
 
+def plot_func_file_diff(file_loc, func, params, values, condition, color, ls):
+    splitstring = file_loc.split("_")
+    data = np.loadtxt(file_loc)
+    recon_qvals = np.linspace(float(splitstring[1]), float(splitstring[2]), float(splitstring[4]))
+    plotrange = recon_qvals[np.abs(recon_qvals)>1.]
+    data = data[np.abs(recon_qvals)>1.]
+    params.append(plotrange)
+    asyline = func(*params)
+    plt.plot(plotrange, np.abs((data-asyline)/data), color=color, ls=ls)
+
+def difference_plotting(m):
+    eq38_fst = lambda m, s, q : (q**2) * ((2.*s + 1.)**2)
+    eq38_snd = lambda m, s, q : (q**2) * ((2.*s + 1.)**2) - ( 2. * (m*q - m**2) )
+
+    if m < 0:
+        qneg = np.linspace(-10, 0, 10000)
+        qpos = np.linspace(0, 10, 10000)
+    else:
+        qneg = np.linspace(0, 10, 10000)
+        qpos = np.linspace(-10, 0, 10000)
+
+    plot_func_file_diff("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_0.txt", eq38_fst, [m, 1], qneg, [np.abs(qneg)>1.], "blue", "-.")
+    plot_func_file_diff("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_0.txt", eq38_snd, [m, 1], qneg, [np.abs(qneg)>1.], "blue", "-")
+    plot_func_file_diff("Numerics/Townsend2003/range_0.0_10.0_steps_952_kval_2.txt", eq38_fst, [m, 1], qpos, [np.abs(qpos)>1.], "purple", "-.")
+    plot_func_file_diff("Numerics/Townsend2003/range_0.0_10.0_steps_952_kval_2.txt", eq38_snd, [m, 1], qpos, [np.abs(qpos)>1.], "purple", "-")
+    plot_func_file_diff("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_1.txt", eq38_fst, [m, 2], qneg, [np.abs(qneg)>1.], "red", "-.")
+    plot_func_file_diff("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_1.txt", eq38_snd, [m, 2], qneg, [np.abs(qneg)>1.], "red", "-")
+    plot_func_file_diff("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_2.txt", eq38_fst, [m, 3], qneg, [np.abs(qneg)>1.], "orange", "-.")
+    plot_func_file_diff("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_2.txt", eq38_snd, [m, 3], qneg, [np.abs(qneg)>1.], "orange", "-")
+    plt.yscale('log')
+
+
 def asymptotic_plotting(m):
     """
     Plots the asymptotic functions to the Laplace Tidal Equations
@@ -71,3 +103,6 @@ def townsend_plotting():
     "Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_1.txt", 
     "Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_2.txt"]
     numerics_plotting(plotlist)
+
+
+

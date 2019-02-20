@@ -43,7 +43,7 @@ def fullrange_multi_rootfind(m, qlists, kvals, aympcompare=False, saving=False):
 
 
 def main():
-    # Need to consider if I want the inputs as m, l or m, k - using l for now
+    # Need to consider if I want the inputs as m, l or m, k - using k for now
     if len(sys.argv) != 3:
         raise RuntimeError("require m and l")
 
@@ -65,19 +65,19 @@ def main():
 #    roots.multi_rootfind(m, l, qpos, is_even)  # Testing if the new function works
 
     qlists = [qneg, qpos]
-    kvals = [0, 1, 2]  # k=0,1,2
+    kvals = [0, 1, 2]  # l=2,3,4
 
-    fullrange_multi_rootfind(m, qlists, kvals, aympcompare=True)  # Mostly for plotting functionality
-#    fullrange_multi_rootfind(m, [qneg], [4], aympcompare=True)  # Testing just for k=-1, negative part
+#    fullrange_multi_rootfind(m, qlists, kvals, aympcompare=True)  # Mostly for plotting functionality
+    fullrange_multi_rootfind(m, [qneg], [-2], aympcompare=True)  # Testing just for k=-2, negative part
 
-#    plotting.asymptotic_plotting(m)
-#    plotting.townsend_plotting()
-#    plt.xlim([-10, 10])
-#    plt.ylim([.1, 6800])  #6800 works for this setup
-#    plt.title("Asymptotic first and second order versus numerical solutions")
-#    plt.xlabel("q (spinparameter)")
-#    plt.ylabel(r"$\lambda$(q)")
-#    plt.show()
+    plotting.asymptotic_plotting(m)
+    plotting.townsend_plotting()
+    plt.xlim([-10, 10])
+    plt.ylim([.1, 6800])  #6800 works for this setup
+    plt.title("Asymptotic first and second order versus numerical solutions")
+    plt.xlabel("q (spinparameter)")
+    plt.ylabel(r"$\lambda$(q)")
+    plt.show()
 
 #    # Sanity plots; testing setup w/ q=0
 #    q = 0

@@ -57,9 +57,9 @@ def multi_rootfind(m, k, qlist, is_even):
     found_lamlist = []
     root = l*(l+.99)  # Initial guessing point, called "root" since that's what its called later
     neg_allowed = False
-    verbose=False
+    verbose = False
     if qlist[-1]*m < 0:
-        print "\nAllowing negatives\n"
+        print "\nAllowing negatives!\n"
         neg_allowed = True
 
     for q in qlist:

@@ -1,6 +1,6 @@
 """Solve ODE for LaPlace Tidal Equations:
 
-  (1 - x^2) \diffrac{f}{x} = (a*alpha*x + m*q*x) * f + (q^2 * m^2 - 1) * g
+  (1 - x^2) \diffrac{f}{x} = (2*alpha*x + m*q*x) * f + (q^2 * m^2 - 1) * g
   (1 - x^2) \diffrac{g}{x} = (2*alpha*x - m*q*x) * g + (lambda*(1-x^2) - m^2)*f
 
 with

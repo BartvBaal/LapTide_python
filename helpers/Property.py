@@ -3,14 +3,18 @@ import numpy as np
 
 class Mode_admin:
     def __init__(self, m, k):
+        """
+        Need to work in the spin of the q's I am testing, since that sets prograde/
+        retrograde movement, which will set the mode for -2<k<2
+        """
         self.m = m
         self.k = k
-        self.l = k + np.abs(m)
+        self.l = self.get_l()
 
     def get_l(self):
         """
-        Sets self.k and returns it according to the following:
-        k = l - np.abs(m)
+        Sets self.l and returns it according to the following:
+        l = k + np.abs(m)
         """
         self.l = self.k + np.abs(self.m)
         return self.l

@@ -18,7 +18,7 @@ class obs_empty_t:
     def __call__(self, point, itt):
         pass
 class obs_print_t:
-    # in the case of outputing to file, could use somethings like this:
+    # ## in the case of outputing to file, could use somethings like this:
     # def __init__ (self, output):
     #     self.output = output
     def __call__(self, point, itt):

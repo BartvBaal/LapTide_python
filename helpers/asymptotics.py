@@ -1,7 +1,12 @@
+import numpy as np
+
 def r_modes(m, k, q):
     """
     First validates if the given parameters can create an r-mode wave.
     Returns the second order approximation.
+
+    TODO; figure out a better pattern to switch between single entry q and
+    numpy arrays of q values
     """
 #    if type(m) != int or type(k) != int or type(q) != int:
 #        raise TypeError("Input parameters should be given as integers")
@@ -24,6 +29,9 @@ def g_modes(m, k, q):
     Figures out which k should be used, since it differs for prograde and
     retrograde modes. Not an optimal way of doing this yet.
     Returns the second order approximation.
+
+    Need to change this so that single values will work; make separate function
+    for lists of q
     """
 #    if type(m) != int or type(k) != int or type(q) != int:
 #        raise TypeError("Input parameters should be given as integers")

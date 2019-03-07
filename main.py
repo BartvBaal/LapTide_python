@@ -14,7 +14,7 @@ import helpers.plotting as plotting
 import helpers.sanity_plots as sanplot
 
 
-def fullrange_multi_rootfind(m, qlists, kvals, aympcompare=False, saving=False):
+def fullrange_multi_rootfind(m, kvals, qlists, aympcompare=False, saving=False):
     """
     Does multi_rootfind per qlist in qlists, for all values of k given in kvals
     Will save the data as part of the process so the plotting can be done
@@ -67,8 +67,8 @@ def main():
     qlists = [qneg, qpos]
     kvals = [0, 1, 2]  # l=2,3,4
 
-#    fullrange_multi_rootfind(m, qlists, kvals, aympcompare=True)  # Mostly for plotting functionality
-    fullrange_multi_rootfind(m, [qneg], [-2], aympcompare=True)  # Testing just for k=-2, negative part
+#    fullrange_multi_rootfind(m, kvals, qlists, aympcompare=True)  # Mostly for plotting functionality
+    fullrange_multi_rootfind(m, [-2], [qneg], aympcompare=True)  # Testing just for k=-2, negative part
 
     plotting.asymptotic_plotting(m)
     plotting.townsend_plotting()

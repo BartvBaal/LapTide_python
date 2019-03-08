@@ -3,10 +3,10 @@ import numpy as np
 def radius(r_eq, mass, period, angle):
     """
     Calculates the radius at the angle, for the given parameters
-    r_eq should be given in meters
-    mass should be given in kilograms
+    r_eq should be given in meters, and is the equatorial radius
+    mass should be given in kilograms, and is the stellar mass
     period should be given in seconds (or 1/freq)
-    angle should be given in radians
+    angle should be given in radians, is the co-latitudinal angle!
     """
     GM = 6.67408e-11 * mass
     epsi = 4*np.pi*np.pi * r_eq**3 / (period*period * GM)

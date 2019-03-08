@@ -20,5 +20,7 @@ def radius(r_eq, mass, period, angle):
     factor = 1 + a0*p0 + a2*p2 + a4*p4
     return factor
 
-polar = radius(18000, 2.5*1.989e30, 1./600, np.pi/2)
-print polar, 1-polar
+if __name__ == "__main__":
+    angles = np.radians([90, 75, 62.5, 52.5, 45, 37.5, 27.5, 15, 0])
+    polar = radius(10000, 1.5*1.989e30, 1./600, angles)
+    print polar, 1-polar

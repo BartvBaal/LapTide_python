@@ -35,7 +35,7 @@ def fullrange_multi_rootfind(m, kvals, qlists, aympcompare=False, saving=False):
             qlist, found_lamlist = roots.multi_rootfind(m, k, qlist, is_even)
             plt.plot(qlist, found_lamlist, color="black", ls="--")
             if saving:
-                savestring = "Numerics/Townsend2003/range_{}_{}_steps_{}_kval_{}.txt"\
+                savestring = "data/Townsend2003/range_{}_{}_steps_{}_kval_{}.txt"\
                                     .format(qlist[0],qlist[-1],len(qlist),str(k))
                 np.savetxt(savestring, found_lamlist)
     plt.yscale('log')

@@ -34,14 +34,14 @@ def difference_plotting(m):
         qneg = np.linspace(0, 10, 10000)
         qpos = np.linspace(-10, 0, 10000)
 
-    plot_func_file_diff("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_0.txt", eq38_fst, [m, 1], qneg, [np.abs(qneg)>1.], "blue", "-.")
-    plot_func_file_diff("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_0.txt", eq38_snd, [m, 1], qneg, [np.abs(qneg)>1.], "blue", "-")
-    plot_func_file_diff("Numerics/Townsend2003/range_0.0_10.0_steps_952_kval_2.txt", eq38_fst, [m, 1], qpos, [np.abs(qpos)>1.], "purple", "-.")
-    plot_func_file_diff("Numerics/Townsend2003/range_0.0_10.0_steps_952_kval_2.txt", eq38_snd, [m, 1], qpos, [np.abs(qpos)>1.], "purple", "-")
-    plot_func_file_diff("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_1.txt", eq38_fst, [m, 2], qneg, [np.abs(qneg)>1.], "red", "-.")
-    plot_func_file_diff("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_1.txt", eq38_snd, [m, 2], qneg, [np.abs(qneg)>1.], "red", "-")
-    plot_func_file_diff("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_2.txt", eq38_fst, [m, 3], qneg, [np.abs(qneg)>1.], "orange", "-.")
-    plot_func_file_diff("Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_2.txt", eq38_snd, [m, 3], qneg, [np.abs(qneg)>1.], "orange", "-")
+    plot_func_file_diff("data/Townsend2003/range_0.0_-10.0_steps_951_kval_0.txt", eq38_fst, [m, 1], qneg, [np.abs(qneg)>1.], "blue", "-.")
+    plot_func_file_diff("data/Townsend2003/range_0.0_-10.0_steps_951_kval_0.txt", eq38_snd, [m, 1], qneg, [np.abs(qneg)>1.], "blue", "-")
+    plot_func_file_diff("data/Townsend2003/range_0.0_10.0_steps_952_kval_2.txt", eq38_fst, [m, 1], qpos, [np.abs(qpos)>1.], "purple", "-.")
+    plot_func_file_diff("data/Townsend2003/range_0.0_10.0_steps_952_kval_2.txt", eq38_snd, [m, 1], qpos, [np.abs(qpos)>1.], "purple", "-")
+    plot_func_file_diff("data/Townsend2003/range_0.0_-10.0_steps_951_kval_1.txt", eq38_fst, [m, 2], qneg, [np.abs(qneg)>1.], "red", "-.")
+    plot_func_file_diff("data/Townsend2003/range_0.0_-10.0_steps_951_kval_1.txt", eq38_snd, [m, 2], qneg, [np.abs(qneg)>1.], "red", "-")
+    plot_func_file_diff("data/Townsend2003/range_0.0_-10.0_steps_951_kval_2.txt", eq38_fst, [m, 3], qneg, [np.abs(qneg)>1.], "orange", "-.")
+    plot_func_file_diff("data/Townsend2003/range_0.0_-10.0_steps_951_kval_2.txt", eq38_snd, [m, 3], qneg, [np.abs(qneg)>1.], "orange", "-")
     plt.yscale('log')
 
 
@@ -96,12 +96,12 @@ def numerics_plotting(plotlist):
 
 
 def townsend_plotting():
-    plotlist = ["Numerics/Townsend2003/range_0.0_10.0_steps_952_kval_0.txt", 
-    "Numerics/Townsend2003/range_0.0_10.0_steps_952_kval_1.txt", 
-    "Numerics/Townsend2003/range_0.0_10.0_steps_952_kval_2.txt", 
-    "Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_0.txt", 
-    "Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_1.txt", 
-    "Numerics/Townsend2003/range_0.0_-10.0_steps_951_kval_2.txt"]
+    plotlist = ["data/Townsend2003/range_0.0_10.0_steps_952_kval_0.txt", 
+    "data/Townsend2003/range_0.0_10.0_steps_952_kval_1.txt", 
+    "data/Townsend2003/range_0.0_10.0_steps_952_kval_2.txt", 
+    "data/Townsend2003/range_0.0_-10.0_steps_951_kval_0.txt", 
+    "data/Townsend2003/range_0.0_-10.0_steps_951_kval_1.txt", 
+    "data/Townsend2003/range_0.0_-10.0_steps_951_kval_2.txt"]
     numerics_plotting(plotlist)
 
 

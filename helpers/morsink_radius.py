@@ -35,24 +35,48 @@ def calc_radius_14(r_eq, mass, period, angle):
     return factor
 
 
+def calc_grav_14_slow(r_eq, mass, period, angle):
+    """
+    Uses equation 49 from AlGendy_Morsink(2014) to calculate the effective
+    gravity at different angles for the "slow rotation" limit
+    """
+    GM = 6.67408e-11 * mass
+    x = GM / (r_eq * 299792458*299792458) 
+    om_bar_sq = 4*np.pi*np.pi * r_eq**3 / (period*period * GM)
+    ce0 = -.791
+    ce1 = .776 * x
+    cp0 = 1.138
+    cp1 = -1.431 * x
+    factor = 1 + om_bar_sq * (ce0 + ce1) * np.sin(angle)**2 \
+                + om_bar_sq * (cp0 + cp1) * np.cos(angle)**2
+    return factor
+
+
 def test_calc(r_eq, mass, freq, angle):
     """
-    with G=c=1 so units don't match => values are garbage
+    with G=c=1 so units don't match => values are bad & don't match with the
+    paper; freq=529 M=1.69 R=12.8 should give om_bar_sq = .1 but I get .175 ??
+    freq=842 M=1.8 R=13.6 should give om_bar_sq = .3 but I get 0.778 ???
+
+    The trick is to still put in all the numbers for G, c and correct for solar
+    mass etc, so the function above (_14) is correct
     """
     x = mass / (r_eq)
-    angvel = (2*np.pi*r_eq * freq)**2
+    angvel = (2*np.pi * freq)**2
     om_bar_sq = angvel * r_eq**3 / (mass)
     o20 = -.788
     o21 = 1.03 * x
     factor = 1 + om_bar_sq * (o20 + o21) * np.cos(angle)**2
-    print "values", angvel, om_bar_sq, x
+    print "dimensionless values", angvel, om_bar_sq, x
     return factor
 
+
 if __name__ == "__main__":
-    r_eq = 12000  # in meters
-    mass = 2.2*1.989e30  # in kg
+    r_eq = 12500  # in meters
+    mass = 1.5*1.9885e30  # in kg
     period = 1./600
     degrees = [90, 75, 62.5, 52.5, 45, 37.5, 27.5, 15, 0]
+    print "Equatorial radius: {} km, mass: {} Msol, spin frequency: {} Hz\n".format(r_eq*1e-3, mass/1.9885e30, 1/period)
     angles = np.radians(degrees)
     polar = calc_radius_07(r_eq, mass, period, angles)
     data = zip(r_eq*polar*1e-3, 1-polar, degrees)
@@ -63,19 +87,22 @@ if __name__ == "__main__":
 
     print "\n ======================================== \n"
     newpolar = calc_radius_14(r_eq, mass, period, angles)
-    newdata = zip(r_eq*newpolar*1e-3, 1-newpolar, degrees)
-    print "AlGendy & Morsink 2014 calculations:"
+    grav = calc_grav_14_slow(r_eq, mass, period, angles)
+    newdata = zip(r_eq*newpolar*1e-3, 1-newpolar, grav, degrees)
+    print "AlGendy & Morsink 2014 calculations (including slow rotation gravity):"
     for elem in newdata:
-        print u"Radius of the star: {:.2f} km,\tdiff: {:.5f},\tco-latitudinal angle: {}\u00b0".format(*elem)
-    print "Ellipciticy: {}, e: {}".format(1 - newpolar[-1]/newpolar[0], 1 - (newpolar[-1]/newpolar[0])**2)
+        print u"Radius of the star: {:.2f} km,\tdiff: {:.5f},\teff_gravity: {:.3f},\tco-latitudinal angle: {}\u00b0".format(*elem)
+    print "Ellipciticy: {}, e: {}, relative gravity change: {}".format(1 - newpolar[-1]/newpolar[0], 1 - (newpolar[-1]/newpolar[0])**2, grav[-1]/grav[0])
 
 #    print "\n ======================================== \n"
-#    newr = 10.
-#    newpolar = test_calc(newr, 1.4, 600., angles)
+#    newr = r_eq*1e-3  # in km
+#    newm = mass/1.989e30  # in Msol
+#    freq = 1./period
+#    newpolar = test_calc(newr, newm, freq, angles)
 #    newdata = zip(newr*newpolar, 1-newpolar, degrees)
 #    for elem in newdata:
 #        print u"Radius of the star: {:.2f} km,\tdiff: {:.5f},\tco-latitudinal angle: {}\u00b0".format(*elem)
-#    print "Ellipciticy: {}".format(1 - newpolar[-1]/newpolar[0])
+#print "Ellipciticy: {}, e: {}".format(1 - newpolar[-1]/newpolar[0], 1 - (newpolar[-1]/newpolar[0])**2)
 
 
 

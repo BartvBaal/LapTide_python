@@ -72,7 +72,7 @@ def main():
     m_list = np.linspace(1.2*1.9885e30, 2.75*1.9885e30, 325)
     period = 1./581 # 4U 1636-536
 #    period = 1./363 # 4U 1728-34
-    good_data = oblate.recover_radius_mass(r_list, m_list, period, 0.1)
+    oblate.recover_radius_mass(r_list, m_list, period, 0.1)
 
 #    fullrange_multi_rootfind(m, kvals, qlists, aympcompare=True)  # Mostly for plotting functionality
 #    fullrange_multi_rootfind(m, [-2], [qneg], aympcompare=True)  # Testing just for k=-2, negative part

@@ -89,7 +89,7 @@ def calc_grav_14_slow_dimless(x, om_bar_sq, angle):
     return factor
 
 
-def recover_radius_mass(r_list, m_list, period, om_bar_sq_target, rtol=5e-4):
+def recover_radius_mass(r_list, m_list, period, om_bar_sq_target, rtol=5e-4, atol=0):
     """
     For all combinations of values in r_list and m_list, this function will
     calculate x and om_bar_sq at the given period. It will return all of the
@@ -103,7 +103,7 @@ def recover_radius_mass(r_list, m_list, period, om_bar_sq_target, rtol=5e-4):
 
     for r, m in data:
         x, om_bar_sq = find_x_ombarsq(r, m, period)
-        if np.isclose(om_bar_sq, om_bar_sq_target, rtol=rtol):
+        if np.isclose(om_bar_sq, om_bar_sq_target, rtol=rtol, atol=atol):
             result.append((r, m))
             print r"x: {:.4f}, Omega_bar²: {:.4f} from r: {:.2f} km, mass: {:.5f} Msol".format(x, om_bar_sq, r*1e-3, m/1.9885e30)
     return np.asarray(result)

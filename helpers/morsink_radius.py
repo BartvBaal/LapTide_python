@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 
 def calc_radius_07(r_eq, mass, period, angle):
@@ -52,23 +53,60 @@ def calc_grav_14_slow(r_eq, mass, period, angle):
     return factor
 
 
-def test_calc(r_eq, mass, freq, angle):
+def find_x_ombarsq(r_eq, mass, period):
     """
-    with G=c=1 so units don't match => values are bad & don't match with the
-    paper; freq=529 M=1.69 R=12.8 should give om_bar_sq = .1 but I get .175 ??
-    freq=842 M=1.8 R=13.6 should give om_bar_sq = .3 but I get 0.778 ???
+    Returns x and omega_bar_squared for the given radius, mass and period
+    x = (GM/(Rc^2)) and om_bar_sq = (om_sqR^3/(GM))
+    """
+    GM = 6.67408e-11 * mass
+    x = GM / (r_eq * 299792458*299792458) 
+    om_bar_sq = 4*np.pi*np.pi * r_eq**3 / (period*period * GM)
+    return x, om_bar_sq
+    
 
-    The trick is to still put in all the numbers for G, c and correct for solar
-    mass etc, so the function above (_14) is correct
+def calc_radius_14_dimless(x, om_bar_sq, angle):
     """
-    x = mass / (r_eq)
-    angvel = (2*np.pi * freq)**2
-    om_bar_sq = angvel * r_eq**3 / (mass)
-    o20 = -.788
+    Uses the dimensionless parameters x (GM/(Rc^2)) and om_bar_sq
+    (om_sqR^3/(GM)) to calculate the radius at the given angle
+    """
+    o20 =  -.788
     o21 = 1.03 * x
     factor = 1 + om_bar_sq * (o20 + o21) * np.cos(angle)**2
-    print "dimensionless values", angvel, om_bar_sq, x
     return factor
+
+
+def calc_grav_14_slow_dimless(x, om_bar_sq, angle):
+    """
+    Uses the dimensionless parameters x (GM/(Rc^2)) and om_bar_sq
+    (om_sqR^3/(GM)) to calculate the effective gravity at the given angle
+    """
+    ce0 = -.791
+    ce1 = .776 * x
+    cp0 = 1.138
+    cp1 = -1.431 * x
+    factor = 1 + om_bar_sq * (ce0 + ce1) * np.sin(angle)**2 \
+                + om_bar_sq * (cp0 + cp1) * np.cos(angle)**2
+    return factor
+
+
+def recover_radius_mass(r_list, m_list, period, om_bar_sq_target, rtol=5e-4):
+    """
+    For all combinations of values in r_list and m_list, this function will
+    calculate x and om_bar_sq at the given period. It will return all of the
+    combinations that are close to om_bar_sq_target, with rtol deciding how
+    accurate the search has to be.
+    
+    Returns the result as a numpy array of tuples (radius, mass)
+    """
+    data = zip(r_list.repeat(len(m_list)), m_list.tolist()*len(r_list))
+    result = []
+
+    for r, m in data:
+        x, om_bar_sq = find_x_ombarsq(r, m, period)
+        if np.isclose(om_bar_sq, om_bar_sq_target, rtol=rtol):
+            result.append((r, m))
+            print r"x: {:.4f}, Omega_bar²: {:.4f} from r: {:.2f} km, mass: {:.5f} Msol".format(x, om_bar_sq, r*1e-3, m/1.9885e30)
+    return np.asarray(result)
 
 
 if __name__ == "__main__":
@@ -76,33 +114,24 @@ if __name__ == "__main__":
     mass = 1.5*1.9885e30  # in kg
     period = 1./600
     degrees = [90, 75, 62.5, 52.5, 45, 37.5, 27.5, 15, 0]
-    print "Equatorial radius: {} km, mass: {} Msol, spin frequency: {} Hz\n".format(r_eq*1e-3, mass/1.9885e30, 1/period)
+    print "Equatorial radius: {} km, mass: {} Msol, spin frequency: {:.2f} Hz\n".format(r_eq*1e-3, mass/1.9885e30, 1/period)
     angles = np.radians(degrees)
     polar = calc_radius_07(r_eq, mass, period, angles)
     data = zip(r_eq*polar*1e-3, 1-polar, degrees)
     print "Morsink et al 2007 calculations:"
     for elem in data:
         print u"Radius of the star: {:.2f} km,\tdiff: {:.5f},\tco-latitudinal angle: {}\u00b0".format(*elem)
-    print "Ellipciticy: {}, e: {}".format(1 - polar[-1]/polar[0], 1 - (polar[-1]/polar[0])**2)
+    print "Ellipciticy: {}, e²: {}".format(1 - polar[-1]/polar[0], 1 - (polar[-1]/polar[0])**2)
 
     print "\n ======================================== \n"
     newpolar = calc_radius_14(r_eq, mass, period, angles)
     grav = calc_grav_14_slow(r_eq, mass, period, angles)
     newdata = zip(r_eq*newpolar*1e-3, 1-newpolar, grav, degrees)
-    print "AlGendy & Morsink 2014 calculations (including slow rotation gravity):"
+    print "AlGendy & Morsink 2014 calculations (including slow rotation GR-gravity):"
     for elem in newdata:
         print u"Radius of the star: {:.2f} km,\tdiff: {:.5f},\teff_gravity: {:.3f},\tco-latitudinal angle: {}\u00b0".format(*elem)
-    print "Ellipciticy: {}, e: {}, relative gravity change: {}".format(1 - newpolar[-1]/newpolar[0], 1 - (newpolar[-1]/newpolar[0])**2, grav[-1]/grav[0])
+    print "Ellipciticy: {}, e²: {}, relative gravity change: {}".format(1 - newpolar[-1]/newpolar[0], 1 - (newpolar[-1]/newpolar[0])**2, grav[-1]/grav[0])
 
-#    print "\n ======================================== \n"
-#    newr = r_eq*1e-3  # in km
-#    newm = mass/1.989e30  # in Msol
-#    freq = 1./period
-#    newpolar = test_calc(newr, newm, freq, angles)
-#    newdata = zip(newr*newpolar, 1-newpolar, degrees)
-#    for elem in newdata:
-#        print u"Radius of the star: {:.2f} km,\tdiff: {:.5f},\tco-latitudinal angle: {}\u00b0".format(*elem)
-#print "Ellipciticy: {}, e: {}".format(1 - newpolar[-1]/newpolar[0], 1 - (newpolar[-1]/newpolar[0])**2)
 
 
 

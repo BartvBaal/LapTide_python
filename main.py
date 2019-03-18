@@ -12,6 +12,7 @@ import helpers.Straddle as Straddle
 import helpers.rootfinder as roots
 import helpers.plotting as plotting
 import helpers.sanity_plots as sanplot
+import helpers.morsink_radius as oblate
 
 
 def fullrange_multi_rootfind(m, kvals, qlists, aympcompare=False, saving=False):
@@ -67,17 +68,23 @@ def main():
     qlists = [qneg, qpos]
     kvals = [0, 1, 2]  # l=2,3,4
 
-#    fullrange_multi_rootfind(m, kvals, qlists, aympcompare=True)  # Mostly for plotting functionality
-    fullrange_multi_rootfind(m, [-2], [qneg], aympcompare=True)  # Testing just for k=-2, negative part
+    r_list = np.linspace(9e3, 16.5e3, 375)
+    m_list = np.linspace(1.2*1.9885e30, 2.75*1.9885e30, 325)
+    period = 1./581 # 4U 1636-536
+#    period = 1./363 # 4U 1728-34
+    good_data = oblate.recover_radius_mass(r_list, m_list, period, 0.1)
 
-    plotting.asymptotic_plotting(m)
-    plotting.townsend_plotting()
-    plt.xlim([-10, 10])
-    plt.ylim([.1, 6800])  #6800 works for this setup
-    plt.title("Asymptotic first and second order versus numerical solutions")
-    plt.xlabel("q (spinparameter)")
-    plt.ylabel(r"$\lambda$(q)")
-    plt.show()
+#    fullrange_multi_rootfind(m, kvals, qlists, aympcompare=True)  # Mostly for plotting functionality
+#    fullrange_multi_rootfind(m, [-2], [qneg], aympcompare=True)  # Testing just for k=-2, negative part
+
+#    plotting.asymptotic_plotting(m)
+#    plotting.townsend_plotting()
+#    plt.xlim([-10, 10])
+#    plt.ylim([.1, 6800])  #6800 works for this setup
+#    plt.title("Asymptotic first and second order versus numerical solutions")
+#    plt.xlabel("q (spinparameter)")
+#    plt.ylabel(r"$\lambda$(q)")
+#    plt.show()
 
 #    # Sanity plots; testing setup w/ q=0
 #    q = 0

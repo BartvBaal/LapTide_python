@@ -89,7 +89,7 @@ def calc_grav_14_slow_dimless(x, om_bar_sq, angle):
     return factor
 
 
-def recover_radius_mass(r_list, m_list, period, om_bar_sq_target, rtol=5e-4, atol=0):
+def recover_radius_mass_old(r_list, m_list, period, om_bar_sq_target, rtol=5e-4, atol=0):
     """
     For all combinations of values in r_list and m_list, this function will
     calculate x and om_bar_sq at the given period. It will return all of the
@@ -104,6 +104,48 @@ def recover_radius_mass(r_list, m_list, period, om_bar_sq_target, rtol=5e-4, ato
     for r, m in data:
         x, om_bar_sq = find_x_ombarsq(r, m, period)
         if np.isclose(om_bar_sq, om_bar_sq_target, rtol=rtol, atol=atol):
+            result.append((r, m))
+            print r"x: {:.4f}, Omega_bar²: {:.4f} from r: {:.2f} km, mass: {:.5f} Msol".format(x, om_bar_sq, r*1e-3, m/1.9885e30)
+    return np.asarray(result)
+
+
+def recover_radius_mass(r_list, m_list, period, om_bar_sq_target, rtol=5e-4, atol=0):
+    """
+    Much faster version of recover_radius_mass_slow(*params), but harder to read
+    what it does.
+
+    For all combinations of values in r_list and m_list, this function will
+    calculate x and om_bar_sq at the given period. It will return all of the
+    combinations that are close to om_bar_sq_target, with rtol deciding how
+    accurate the search has to be.
+    
+    Returns the result as a numpy array of tuples (radius, mass)
+    """
+    rlen = len(r_list)
+    mlen = len(m_list)
+
+    # Some code to create the complete mass and radius lists in correct order
+    # This will then find the x, om_bar_sq values for all the combinations
+    # Then a masked array will be created to recover the values in range of the
+    # om_bar_sq_target value, and print out r, m, x and om_bar_sq where it matched
+    newr = np.repeat(r_list, mlen).reshape(rlen, mlen)
+    newm = np.repeat(m_list, rlen).reshape(mlen, rlen).T
+    stacked = np.stack((newr, newm), axis=-1)
+    data = stacked.flatten().reshape(rlen*mlen, 2)
+    finr = data[:,0]
+    finm = data[:,1]
+    x, om_bar_sq = find_x_ombarsq(finr, finm, period)
+
+    result = []
+    all_loc = np.where(np.isclose(om_bar_sq, om_bar_sq_target, rtol=rtol, atol=atol))
+
+    for loc in all_loc:
+        x = x[loc]
+        om_bar_sq = om_bar_sq[loc]
+        rm = data[loc]
+        for data in zip(rm, x, om_bar_sq):
+            rm, x, om_bar_sq = data
+            r, m = rm
             result.append((r, m))
             print r"x: {:.4f}, Omega_bar²: {:.4f} from r: {:.2f} km, mass: {:.5f} Msol".format(x, om_bar_sq, r*1e-3, m/1.9885e30)
     return np.asarray(result)

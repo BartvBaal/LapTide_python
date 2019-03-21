@@ -189,8 +189,9 @@ def plot_different_dimless(om_bar_sq_values, period=1./581, sn="4U 1636-536", cm
     # gets within the wanted accuracy of the wanted omega_bar_squared value
     for om_bar_sq, c in zip(om_bar_sq_values, clist):
         good_data = oblate.recover_radius_mass(r_list, m_list, period, om_bar_sq, rtol=rtol, atol=atol)
-        radius, mass = good_data[:,0], good_data[:,1]
-        plt.scatter(radius*1e-3, mass/1.9885e30, c=c, label=r"$\bar\Omega^2$: {}".format(om_bar_sq))
+        if good_data != []:
+            radius, mass = good_data[:,0], good_data[:,1]
+            plt.scatter(radius*1e-3, mass/1.9885e30, c=c, label=r"$\bar\Omega^2$: {}".format(om_bar_sq))
 
     # Some extra layout for the plot, including a rescaling of the legend dotsizes
     plt.xlabel("Equatorial radius (km)")
@@ -263,7 +264,7 @@ def main():
 #    compare_newfile(m)
 
 
-    rtol = 4e-5
+    rtol = 5e-4
     period = 1./581
     sn = "4U 1636-536"
 #    period = 1./363

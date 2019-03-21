@@ -74,7 +74,7 @@ class ODE_t:
 
     def __call__ (self, t, y):
     # Comments show what variables are called in legendre-ode_derivation.pdf
-        sinsq = 1. - t*t  # 1-(x**2)
+        sinsq = 1. - t*t  # 1-(x**2) (\equiv 1-\mu^2 \equiv sin^2 => name)
         twoax = 2. * self.alpha * t  # 2*alpha*x
         mqx = self.m * self.q * t  # m*q*x
         qxsqmo = (self.qsq * t*t) - 1  # (x**2 * q**2) - 1

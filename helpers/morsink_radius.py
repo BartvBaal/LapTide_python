@@ -128,13 +128,9 @@ def recover_radius_mass(r_list, m_list, period, om_bar_sq_target, rtol=5e-4, ato
     # This will then find the x, om_bar_sq values for all the combinations
     # Then a masked array will be created to recover the values in range of the
     # om_bar_sq_target value, and print out r, m, x and om_bar_sq where it matched
-    newr = np.repeat(r_list, mlen).reshape(rlen, mlen)
-    newm = np.repeat(m_list, rlen).reshape(mlen, rlen).T
-    stacked = np.stack((newr, newm), axis=-1)
-    data = stacked.flatten().reshape(rlen*mlen, 2)
-    finr = data[:,0]
-    finm = data[:,1]
-    x, om_bar_sq = find_x_ombarsq(finr, finm, period)
+    newr = np.repeat(r_list, mlen)
+    newm = np.tile(m_list, rlen)
+    x, om_bar_sq = find_x_ombarsq(newr, newm, period)
 
     result = []
     all_loc = np.where(np.isclose(om_bar_sq, om_bar_sq_target, rtol=rtol, atol=atol))
@@ -142,21 +138,21 @@ def recover_radius_mass(r_list, m_list, period, om_bar_sq_target, rtol=5e-4, ato
     for loc in all_loc:
         x = x[loc]
         om_bar_sq = om_bar_sq[loc]
-        rm = data[loc]
-        for data in zip(rm, x, om_bar_sq):
-            rm, x, om_bar_sq = data
-            r, m = rm
+        r = newr[loc]
+        m = newm[loc]
+        for data in zip(r, m, x, om_bar_sq):
+            r, m, x, om_bar_sq = data
             result.append((r, m))
             print r"x: {:.4f}, Omega_bar²: {:.4f} from r: {:.2f} km, mass: {:.5f} Msol".format(x, om_bar_sq, r*1e-3, m/1.9885e30)
     return np.asarray(result)
 
 
 if __name__ == "__main__":
-    r_eq = 12500  # in meters
-    mass = 1.5*1.9885e30  # in kg
-    period = 1./600
+    r_eq = 12000  # in meters
+    mass = 1.8*1.9885e30  # in kg
+    period = 1./581
     degrees = [90, 75, 62.5, 52.5, 45, 37.5, 27.5, 15, 0]
-    print "Equatorial radius: {} km, mass: {} Msol, spin frequency: {:.2f} Hz\n".format(r_eq*1e-3, mass/1.9885e30, 1/period)
+    print "Equatorial radius: {} km, mass: {} Msol, spin frequency: {:.1f} Hz\n".format(r_eq*1e-3, mass/1.9885e30, 1/period)
     angles = np.radians(degrees)
     polar = calc_radius_07(r_eq, mass, period, angles)
     data = zip(r_eq*polar*1e-3, 1-polar, degrees)

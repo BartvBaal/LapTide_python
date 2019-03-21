@@ -136,11 +136,7 @@ def recover_radius_mass(r_list, m_list, period, om_bar_sq_target, rtol=5e-4, ato
     all_loc = np.where(np.isclose(om_bar_sq, om_bar_sq_target, rtol=rtol, atol=atol))
 
     for loc in all_loc:
-        x = x[loc]
-        om_bar_sq = om_bar_sq[loc]
-        r = newr[loc]
-        m = newm[loc]
-        for data in zip(r, m, x, om_bar_sq):
+        for data in zip(newr[loc], newm[loc], x[loc], om_bar_sq[loc]):
             r, m, x, om_bar_sq = data
             result.append((r, m))
             print r"x: {:.4f}, Omega_bar²: {:.4f} from r: {:.2f} km, mass: {:.5f} Msol".format(x, om_bar_sq, r*1e-3, m/1.9885e30)

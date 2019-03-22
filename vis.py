@@ -172,7 +172,8 @@ def oblate_plot_alternative(om_bar_sq):
     plt.show()
 
 
-def plot_different_dimless(om_bar_sq_values, period=1./581, sn="4U 1636-536", cmap="Reds", rtol=5e-4, atol=0):
+def plot_different_dimless(om_bar_sq_values, period=1./581, sn="4U 1636-536",\
+                            cmap="Reds", rtol=5e-4, atol=0):
     r_list = np.linspace(9e3, 16.5e3, 3000)
     m_list = np.linspace(1.2*1.9885e30, 2.75*1.9885e30, 2500)
 
@@ -188,9 +189,9 @@ def plot_different_dimless(om_bar_sq_values, period=1./581, sn="4U 1636-536", cm
     # Run the recover function to find out which of the radius-mass combinations
     # gets within the wanted accuracy of the wanted omega_bar_squared value
     for om_bar_sq, c in zip(om_bar_sq_values, clist):
-        good_data = oblate.recover_radius_mass(r_list, m_list, period, om_bar_sq, rtol=rtol, atol=atol)
-        if good_data != []:
-            radius, mass = good_data[:,0], good_data[:,1]
+        data = oblate.recover_radius_mass(r_list, m_list, period, om_bar_sq, rtol=rtol, atol=atol)
+        if data.size:
+            radius, mass = data[:,0], data[:,1]
             plt.scatter(radius*1e-3, mass/1.9885e30, c=c, label=r"$\bar\Omega^2$: {}".format(om_bar_sq))
 
     # Some extra layout for the plot, including a rescaling of the legend dotsizes
@@ -265,10 +266,10 @@ def main():
 
 
     rtol = 5e-4
-    period = 1./581
-    sn = "4U 1636-536"
-#    period = 1./363
-#    sn = "4U 1728-34"
+#    period = 1./581
+#    sn = "4U 1636-536"
+    period = 1./363
+    sn = "4U 1728-34"
 #    period = 1./620
 #    sn = "4U 1608-522"
 #    period = 1./294

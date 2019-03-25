@@ -6,6 +6,7 @@ import matplotlib.animation as animation
 
 import classes.Legendre as Legendre
 import classes.LaPlace as LaPlace
+import classes.Curvilinear as Curvilinear
 
 import helpers.Property as Property
 import helpers.Straddle as Straddle
@@ -43,6 +44,33 @@ def fullrange_multi_rootfind(m, kvals, qlists, aympcompare=False, saving=False):
     plt.show()
 
 
+def fullrange_multi_rootfind_curvi(m, kvals, qlists, r_eq, mass, period, \
+                                    aympcompare=False, saving=False):
+    """
+    Curvilinear version of fullrange_multi_rootfind
+
+    Not yet in final version! and DO NOT USE the saving argument!
+    """
+    if aympcompare:
+        plotting.asymptotic_plotting(m)
+    for qlist in qlists:
+        for k in kvals:
+            is_even = Curvilinear.check_is_even(m, k)
+            print is_even
+
+            qlist, found_lamlist = roots.multi_rootfind_curvilinear(m, k, qlist, is_even, r_eq, mass, period)
+            plt.plot(qlist, found_lamlist, color="black", ls="--")
+            if saving:
+                savestring = "data/Curvilinear/range_{}_{}_steps_{}_kval_{}.txt"\
+                                    .format(qlist[0],qlist[-1],len(qlist),str(k))
+                np.savetxt(savestring, found_lamlist)
+    plt.yscale('log')
+    plt.show()
+
+
+
+
+
 def main():
     # Need to consider if I want the inputs as m, l or m, k - using k for now
     if len(sys.argv) != 3:
@@ -68,11 +96,19 @@ def main():
     qlists = [qneg, qpos]
     kvals = [0, 1, 2]  # l=2,3,4
 
-    r_list = np.linspace(9e3, 16.5e3, 375)
-    m_list = np.linspace(1.2*1.9885e30, 2.75*1.9885e30, 325)
-    period = 1./581 # 4U 1636-536
-#    period = 1./363 # 4U 1728-34
-    oblate.recover_radius_mass(r_list, m_list, period, 0.1)
+#    r_list = np.linspace(9e3, 16.5e3, 375)
+#    m_list = np.linspace(1.2*1.9885e30, 2.75*1.9885e30, 325)
+#    period = 1./581 # 4U 1636-536
+##    period = 1./363 # 4U 1728-34
+#    oblate.recover_radius_mass(r_list, m_list, period, 0.1)
+
+    r_eq = 12000  # in meters
+    mass = 1.8*1.9855e30  # in kg
+    period = np.inf  # no period so no spin so **should match old equations** like this
+    fullrange_multi_rootfind_curvi(m, kvals, qlists, r_eq, mass, period, aympcompare=True)
+
+    #TODO: need to fix the initial guess for higher spins
+    # For 363/581 Hz the initial guess doesn't stradle a root!
 
 #    fullrange_multi_rootfind(m, kvals, qlists, aympcompare=True)  # Mostly for plotting functionality
 #    fullrange_multi_rootfind(m, [-2], [qneg], aympcompare=True)  # Testing just for k=-2, negative part

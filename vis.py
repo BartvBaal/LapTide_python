@@ -266,10 +266,10 @@ def main():
 
 
     rtol = 5e-4
-#    period = 1./581
-#    sn = "4U 1636-536"
-    period = 1./363
-    sn = "4U 1728-34"
+    period = 1./581
+    sn = "4U 1636-536"
+#    period = 1./363
+#    sn = "4U 1728-34"
 #    period = 1./620
 #    sn = "4U 1608-522"
 #    period = 1./294
@@ -279,7 +279,7 @@ def main():
     compare_dimless(period=period, sn=sn)
 
 #    oblate_plot(.1)
-#    oblate_plot_alternative(.1)
+    oblate_plot_alternative(.1)
 
 #    for om_bar_sq in [.04, .10, .16, .22]:
 #        oblate_plot(om_bar_sq)

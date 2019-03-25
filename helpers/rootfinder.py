@@ -2,6 +2,7 @@ import numpy as np
 from scipy import optimize
 
 import classes.LaPlace as LaPlace
+import classes.Curvilinear as Curvilinear
 import helpers.Straddle as Straddle
 
 
@@ -13,6 +14,15 @@ def shoot_laplace(lam, m, q, is_even):
 def rootfinder_laplace(m, q, lamlist, is_even):
     lamlow, lamhigh = lamlist
     return optimize.bisect(shoot_laplace, lamlow, lamhigh, args=(m, q, is_even), full_output=True)
+
+
+def shoot_curvilinear(lam, m, q, is_even, r_eq, mass, period):
+    curvi_solver = Curvilinear.solver_t(m, q, is_even, r_eq, mass, period)
+    return curvi_solver(lam)
+
+
+def rootfinder_curvilinear(m, q, lamlist, is_even, r_eq, mass, period):
+    return optimize.bisect(shoot_curvilinear, min(lamlist), max(lamlist), args=(m, q, is_even, r_eq, mass, period), full_output=True)
 
 
 def straddlefinder(fn, x0, verbose=False, neg_allowed=False):
@@ -73,3 +83,36 @@ def multi_rootfind(m, k, qlist, is_even):
 
     found_lamlist = np.asarray(found_lamlist, dtype=float)
     return qlist, found_lamlist
+
+
+def multi_rootfind_curvilinear(m, k, qlist, is_even, r_eq, mass, period):
+    """
+    multi_rootfind but for the curvilinear function instead. Should reduce to
+    the multi_rootfind (laplace version) in the no-spin limit (so period=np.inf)
+
+    should check this over with Frank, since the function 'fn' never changes
+    and there is lots of room for optimization probably, which would be very
+    helpful
+    """
+    l = k + np.abs(m)
+    found_lamlist = []
+    root = l*(l+.99)
+    neg_allowed = False
+    verbose = False
+    if qlist[-1]*m < 0:
+        print "\nAllowing negatives!\n"
+        neg_allowed = True
+
+    for q in qlist:
+        fn = Curvilinear.solver_t(m, q, is_even, r_eq, mass, period)
+        lamlist = straddlefinder(fn, root, verbose, neg_allowed)
+
+        root = rootfinder_curvilinear(m, q, lamlist, is_even, r_eq, mass, period)[0]
+
+        found_lamlist.append(root)
+        print q, root, lamlist
+
+    found_lamlist = np.asarray(found_lamlist, dtype=float)
+    return qlist, found_lamlist
+
+

@@ -18,6 +18,7 @@ from scipy.integrate import odeint
 from scipy.interpolate import interp1d
 
 import Observers
+import helpers.morsink_radius as oblate
 
 ## -------------------------------------------------------------------------- ##
 
@@ -25,7 +26,7 @@ eps = 1.0e-6
 t0 = 1. - eps
 t1 = 0.
 
-def norm (arr):
+def norm(arr):
     fmax = np.amax(arr)
     fmin = np.amin(arr)
     if abs(fmax) > abs(fmin):
@@ -33,19 +34,19 @@ def norm (arr):
     else:
         return fmin
 
-def check_is_even (m, l):
+def check_is_even(m, l):
     if (m+l) % 2 == 0:
         return True
     else:
         return False
 
-def is_even_str (is_even):
+def is_even_str(is_even):
     if is_even is True:
         return "even"
     else:
         return "odd"
 
-def eigval (l):
+def eigval(l):
     return l*(l+1.0)
 
 ## -------------------------------------------------------------------------- ##
@@ -58,48 +59,62 @@ class ODE_t:
             # \Gamma \equiv (2\bar\Omega^2 + 4\epsilon) / (1 - \bar\Omega^2)
         # With eccentricity, epsilon and om_bar_sq the parameters above are set
             # We need R_{eq} and R_{polar} for ecc/eps
-            # We need R_{eq}, \Omega *and* M for om_bar_sq
+            # We need R_{eq}, \Omega *and* M for om_bar_sq&R_{polar}
             # Fortunately we can choose these at the start of the simulation
             # and they will remain constants, but the initial conditions of the
             # star will now matter for the outcome
-    # TODO: decide if I will input R_eq, R_polar, M, Omega *or* sigma, Gamma
-    def __init__ (self, m, q, lam):
+    # TODO: decide if I will input R_eq, R_polar, M, Omega *or* sigma, Gamma *or* x, om_bar_sq
+    def __init__(self, m, q, lam, r_eq, mass, period):
         self.m = 1. * m
         self.q = 1. * q
         self.msq = m*m
         self.qsq = q*q
 
+        self.r_eq = r_eq
+        self.mass = mass
+        self.period = period
+        self.r_polar = oblate.calc_radius_14(r_eq, mass, period, 0) * r_eq
+
+        self.x, self.om_bar_sq = oblate.find_x_ombarsq(r_eq, mass, period)
+        self.ecc = 1 - (self.r_polar / r_eq)**2  # Eccentricity, e**2
+        self.ell = 1 - (self.r_polar / r_eq)  # Ellipticity, epsilon
+
         self.alpha = .5 * abs(self.m)
         self.lam = 1. * lam
 
-    def init_y (self):
+    def init_y(self):
         y0 = 1.0e-4
-        y1 = (2 * self.alpha + self.m * self.q)*t0*y0/(1 - t0*t0*self.qsq)
+        sig = np.sqrt(1 - self.ecc * (1 - y0**2))
+        y1 = (2 * self.alpha + self.m * self.q)*t0*y0 / (sig*(1 - t0*t0*self.qsq/sig/sig))
         return [y0, y1]  # Starting point, variation of RHS of eq (10)
 
-    def coeffs (self, t):
+    def coeffs(self, t):
         ## TODO: update as this is now Curvilinear!, not Legendre!
         sinsq = 1. - t*t
         twoax = 2. * self.alpha * t
         return np.array([twoax / sinsq, -1. / sinsq, self.lam - self.msq / sinsq, twoax / sinsq])
 
-    def __call__ (self, t, y):
+    def __call__(self, t, y):
     # Comments show what variables are called in legendre-ode_derivation.pdf
         sinsq = 1. - t*t  # 1-(x**2) (\equiv 1-\mu^2 \equiv sin^2 => name)
         twoax = 2. * self.alpha * t  # 2*alpha*x
         mqx = self.m * self.q * t  # m*q*x
-        qxsqmo = (self.qsq * t*t) - 1  # (x**2 * q**2) - 1
-        dy0dt = ( (twoax + mqx)*y[0] + qxsqmo*y[1] ) / sinsq  # eq (8), rewritten
+        sig = np.sqrt(1 - self.ecc * sinsq)
+        gam = (2*self.om_bar_sq + 4*self.ell) / (1-self.om_bar_sq)
+        qxsqmo_sigcor = ((self.qsq * t*t / (sig*sig)) - 1) *sig  # [(x^2*q^2/sig^2)-1]*sig
+        dlng = 2*gam*t / (2 + t*t*gam)
+        dy0dt = ( (twoax + mqx)*y[0] + qxsqmo_sigcor*y[1] ) / sinsq  # eq (8), rewritten
 #        dy1dt = ( (self.lam*sinsq - self.msq)*y[0] + (twoax - mqx)*y[1] ) / sinsq
-        dy1dt = self.lam*y[0] - (self.msq*y[0] - (twoax - mqx)*y[1]) / sinsq  # eq(9), rewritten
+        dy1dt = (dlng + sig*self.lam)*y[0] - \
+                (sig*self.msq*y[0] - (twoax - mqx)*y[1]) / sinsq  # eq(9), rewritten
         return [dy0dt, dy1dt]
 
-    def transform (self, steps, solun):
+    def transform(self, steps, solun):
         for t, y in zip(steps, solun):
             one_m_xsq_a = np.power(1. - t*t, self.alpha)
             y *= one_m_xsq_a
 
-def run_ode (leg, obs):
+def run_ode(cur, obs):
     """Shoot the ode for given m and observer. Could implement 
     this as an object"""
     # stepper = 'dopri5'
@@ -107,8 +122,8 @@ def run_ode (leg, obs):
     atol = 0.
     rtol = 1./(2**30)
     nsteps = 2000
-    y0 = leg.init_y()
-    solver = ode(leg)
+    y0 = cur.init_y()
+    solver = ode(cur)
     solver.set_integrator(stepper, atol=atol, rtol=rtol, nsteps=nsteps)
     solver.set_solout(obs)
     solver.set_initial_value(y0, t0)
@@ -118,50 +133,53 @@ def run_ode (leg, obs):
 
 class score_t:
     """Provide f or g depending on odd or even"""
-    def __init__ (self, is_even):
+    def __init__(self, is_even):
         self.idx = self.set_idx(is_even)
     def set_idx (self, is_even):
         if is_even is True:
             return 1
         return 0
-    def __call__ (self, y1):
+    def __call__(self, y1):
         return y1[self.idx]
 
 ## -------------------------------------------------------------------------- ##
 
 class solver_t:
     """Shoot for x=0 from x=1-eps, can also save eigenvalues of solution"""
-    def __init__ (self, m, q, is_even):
+    def __init__(self, m, q, is_even, r_eq, mass, period):
         self.m = m
         self.q = q
         self.score = score_t(is_even)
+        self.r_eq = r_eq
+        self.mass = mass
+        self.period = period
 
-    def set_m (self, m):
+    def set_m(self, m):
         self.m = m
 
-    def set_is_even (self, is_even):
+    def set_is_even(self, is_even):
         self.score.set_idx(is_even)
 
-    def shoot (self, lam):
-        leg = ODE_t(self.m, self.q, lam)
+    def shoot(self, lam):
+        cur = ODE_t(self.m, self.q, lam, self.r_eq, self.mass, self.period)
         obs = Observers.max_t()
-        y1 = run_ode(leg, obs)
+        y1 = run_ode(cur, obs)
         return self.score(y1 / obs.max_f)
 
-    def __call__ (self, lam):
+    def __call__(self, lam):
         return self.shoot(lam)
 
-    def save (self, lam):
-        leg = ODE_t(self.m, self.q, lam)
+    def save(self, lam):
+        cur = ODE_t(self.m, self.q, lam, self.r_eq, self.mass, self.period)
         obs = Observers.save_t()
-        run_ode(leg, obs)
+        run_ode(cur, obs)
         steps = obs.steps()
         solun = obs.solun()
-        leg.transform(steps, solun)
+        cur.transform(steps, solun)
         N = norm(solun[:,0])
         return steps, solun / N
 
-    def interp (self, lam, steps):
+    def interp(self, lam, steps):
         """note: interpolation is performed using cubic spline.
         Should probably check how scipy.integrate.solve_ivp interpolates;
         possibly uses dense output stepper for interpolation"""

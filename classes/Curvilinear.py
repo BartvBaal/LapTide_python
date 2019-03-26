@@ -157,6 +157,9 @@ class solver_t:
     def set_m(self, m):
         self.m = m
 
+    def set_q(self, q):
+        self.q = q
+
     def set_is_even(self, is_even):
         self.score.set_idx(is_even)
 

@@ -1,5 +1,6 @@
 #!/bin/bin/python
 import sys
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -68,9 +69,6 @@ def fullrange_multi_rootfind_curvi(m, kvals, qlists, r_eq, mass, period, \
     plt.show()
 
 
-
-
-
 def main():
     # Need to consider if I want the inputs as m, l or m, k - using k for now
     if len(sys.argv) != 3:
@@ -80,7 +78,7 @@ def main():
     k = int(sys.argv[2])
 
     mode_admin = Property.Mode_admin(m, k)
-    mode_admin.validate_values()
+    mode_admin.validate_values()  # Mode_admin now checks this upon init!
     is_even = mode_admin.is_even()
     l = mode_admin.get_l()
     wavemode = mode_admin.get_wavemode()
@@ -105,7 +103,14 @@ def main():
     r_eq = 12000  # in meters
     mass = 1.8*1.9855e30  # in kg
     period = np.inf  # no period so no spin so **should match old equations** like this
-    fullrange_multi_rootfind_curvi(m, kvals, qlists, r_eq, mass, period, aympcompare=True)
+#    fullrange_multi_rootfind_curvi(m, kvals, qlists, r_eq, mass, period, aympcompare=True)
+    start_time_new = time.time()
+    roots.multi_rootfind_curvilinear_new(m, qneg, is_even, 5.5, r_eq, mass, period)
+    end_time_new = time.time()
+    start_time_old = time.time()
+    roots.multi_rootfind_curvilinear(m, 0, qneg, is_even, r_eq, mass, period)
+    end_time_old = time.time()
+    print "New function took: {} seconds, old function took: {} seconds".format(end_time_new - start_time_new, end_time_old - start_time_old)
 
     #TODO: need to fix the initial guess for higher spins
     # For 363/581 Hz the initial guess doesn't stradle a root!

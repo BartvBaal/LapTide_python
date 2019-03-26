@@ -4,6 +4,7 @@ from scipy import optimize
 import classes.LaPlace as LaPlace
 import classes.Curvilinear as Curvilinear
 import helpers.Straddle as Straddle
+import helpers.Property as Property
 
 
 def shoot_laplace(lam, m, q, is_even):
@@ -22,7 +23,7 @@ def shoot_curvilinear(lam, m, q, is_even, r_eq, mass, period):
 
 
 def rootfinder_curvilinear(m, q, lamlist, is_even, r_eq, mass, period):
-    return optimize.bisect(shoot_curvilinear, min(lamlist), max(lamlist), args=(m, q, is_even, r_eq, mass, period), full_output=True)
+    return optimize.brentq(shoot_curvilinear, lamlist[0], lamlist[1], args=(m, q, is_even, r_eq, mass, period), full_output=True)
 
 
 def straddlefinder(fn, x0, verbose=False, neg_allowed=False):
@@ -85,6 +86,36 @@ def multi_rootfind(m, k, qlist, is_even):
     return qlist, found_lamlist
 
 
+def multi_rootfind_curvilinear_new(m, qlist, is_even, init_guess, r_eq, mass, period, verbose=False):
+    """
+    New way of calculating all the eigenvalues for q's in qlist
+    Not yet faster than the old method, unfortunately. But at least it's not slower
+    """
+    root = init_guess
+    neg_allowed = False
+    inc = 1.0033  # qneg, k=2 will break if inc is too large!
+    N_steps = 100
+    if qlist[-1]*m < 0:
+        print "\nAllowing negatives!\n"
+        neg_allowed = True
+
+    found_lamlist = np.arange(float(len(qlist)))
+    fn = Curvilinear.solver_t(m, qlist[0], is_even, r_eq, mass, period)
+    straddle = Straddle.straddle_t(fn, inc, N_steps)
+    qlam = zip(qlist, found_lamlist)
+
+    for q, lam in qlam:
+        fn.set_q(q)
+        bisec = straddle.search_log(root, verbose=verbose, neg_allowed=neg_allowed)
+        root = rootfinder_curvilinear(m, q, bisec, is_even, r_eq, mass, period)[0]
+
+#        np.put(found_lamlist, lam, root)
+        found_lamlist[lam] = root
+        print q, root, bisec
+
+    return qlist, found_lamlist
+
+
 def multi_rootfind_curvilinear(m, k, qlist, is_even, r_eq, mass, period):
     """
     multi_rootfind but for the curvilinear function instead. Should reduce to
@@ -115,4 +146,12 @@ def multi_rootfind_curvilinear(m, k, qlist, is_even, r_eq, mass, period):
     found_lamlist = np.asarray(found_lamlist, dtype=float)
     return qlist, found_lamlist
 
+
+def multi_rootfind_curvilinear_adminversion(curvi_admin, r_eq, mass, period, verbose=False):
+    """
+    Takes in a curvi_admin object which already has all the information for m,
+    k and qlist for which to calculate the eigenvalues.
+    Since curvi_admin is not yet operational this function is void for now
+    """
+    pass
 

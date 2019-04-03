@@ -11,6 +11,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 import classes.Legendre as Legendre
 import classes.LaPlace as LaPlace
+import classes.Curvilinear as Curvilinear
 
 import helpers.Property as Property
 import helpers.Straddle as Straddle
@@ -61,6 +62,17 @@ def fullrange_multi_rootfind(m, qlists, kvals, aympcompare=False, saving=False):
                 savestring = "data/Townsend2003/range_{}_{}_steps_{}_kval_{}.txt"\
                                     .format(qlist[0],qlist[-1],len(qlist),str(k))
                 np.savetxt(savestring, found_lamlist)
+    plt.yscale('log')
+    plt.show()
+
+
+def multi_eccentricity_rootfind(m, k, qlist, is_even, r_eq, mass, periodlist):
+    for period in periodlist:
+        qlist, found_lamlist = roots.multi_rootfind_curvilinear(m, k, qlist, is_even, r_eq, mass, period)
+        plt.plot(qlist, found_lamlist, label="{} Hz".format(1./period))
+    plt.legend(fontsize=24, frameon=True, fancybox=True, edgecolor="#000000")
+    plt.title(r"Wave m: {}, k: {}, with mass {} $M_\odot$ and radius {} km".format(\
+                m, k, mass/1.9885e30, r_eq*1e-3))
     plt.yscale('log')
     plt.show()
 
@@ -264,22 +276,26 @@ def main():
 #    error_numasyplot(m)
 #    compare_newfile(m)
 
+    r_eq = 10000
+    mass = 1.4*1.9885e30
+    periodlist = [np.inf, 1./100, 1./363, 1./581]
+    multi_eccentricity_rootfind(m, k, qpos, is_even, r_eq, mass, periodlist)
 
-    rtol = 5e-4
-    period = 1./581
-    sn = "4U 1636-536"
-#    period = 1./363
-#    sn = "4U 1728-34"
-#    period = 1./620
-#    sn = "4U 1608-522"
-#    period = 1./294
-#    sn = "IGR J17191-2821"
-    om_bar_sq_values = [.03, .065, .1, .15, .20, .27]
-    plot_different_dimless(om_bar_sq_values, period=period, sn=sn, cmap="inferno", rtol=rtol)
-    compare_dimless(period=period, sn=sn)
+#    rtol = 5e-4
+#    period = 1./581
+#    sn = "4U 1636-536"
+##    period = 1./363
+##    sn = "4U 1728-34"
+##    period = 1./620
+##    sn = "4U 1608-522"
+##    period = 1./294
+##    sn = "IGR J17191-2821"
+#    om_bar_sq_values = [.03, .065, .1, .15, .20, .27]
+#    plot_different_dimless(om_bar_sq_values, period=period, sn=sn, cmap="inferno", rtol=rtol)
+#    compare_dimless(period=period, sn=sn)
 
-#    oblate_plot(.1)
-    oblate_plot_alternative(.1)
+##    oblate_plot(.1)
+#    oblate_plot_alternative(.1)
 
 #    for om_bar_sq in [.04, .10, .16, .22]:
 #        oblate_plot(om_bar_sq)

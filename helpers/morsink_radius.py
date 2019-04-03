@@ -141,5 +141,14 @@ if __name__ == "__main__":
     print "Ellipciticy: {}, e²: {}, relative gravity change: {}".format(1 - newpolar[-1]/newpolar[0], 1 - (newpolar[-1]/newpolar[0])**2, grav[-1]/grav[0])
 
 
+#    om_bar_sq = find_x_ombarsq(r_eq, mass, period)[1]
+#    eps = 1 - newpolar[-1]/newpolar[0]
+#    gamma = (2*om_bar_sq + 4*eps) / (1 - om_bar_sq)
+#    c = newpolar[-1]
+#    a = newpolar[0]
+#    lhs = gamma*c/a
+#    rhs = (a**2 - c**2)/c**2
+#    print lhs, rhs, lhs/rhs 
+
 
 

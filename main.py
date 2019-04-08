@@ -109,7 +109,9 @@ def main():
     init_guess = asym.r_modes(m, k, -50.)
     print init_guess
     r_qlist = np.linspace(-50., -6.05, 250)  # r-modes are fine with far fewer steps really
-    qlist, found_lamlist = roots.multi_rootfind_curvilinear_new(m, r_qlist, is_even, init_guess, r_eq, mass, period, verbose=False, inc=1.05)
+    guesslist = asym.r_modes(m, k, r_qlist)
+#    qlist, found_lamlist = roots.multi_rootfind_curvilinear_new(m, r_qlist, is_even, init_guess, r_eq, mass, period, verbose=False, inc=1.05)
+    qlist, found_lamlist = roots.multi_rootfind_fromguess(m, r_qlist, is_even, guesslist, r_eq, mass, period, verbose=False, inc=1.05)
 
     eq39 = lambda m, s, q : (m*q - m*m)**2 / (q*q * (2*s + 1)**2)
     eq39_2nd = lambda m, s, q : (m*q - m*m)**2 / (q*q * (2*s + 1)**2) + (2. * ((m*q - m*m)**3)) / (q**4 * ((2.*s + 1)**4))

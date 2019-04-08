@@ -86,14 +86,14 @@ def multi_rootfind(m, k, qlist, is_even):
     return qlist, found_lamlist
 
 
-def multi_rootfind_curvilinear_new(m, qlist, is_even, init_guess, r_eq, mass, period, verbose=False):
+def multi_rootfind_curvilinear_new(m, qlist, is_even, init_guess, r_eq, mass, period, verbose=False, inc=1.0033):
     """
     New way of calculating all the eigenvalues for q's in qlist
     Not yet faster than the old method, unfortunately. But at least it's not slower
     """
     root = init_guess
-    neg_allowed = False
-    inc = 1.0033  # qneg, k=2 will break if inc is too large!
+    neg_allowed = True
+    inc = inc  # qneg, k=2 will break if inc is too large!
     N_steps = 100
     if qlist[-1]*m < 0:
         print "\nAllowing negatives!\n"

@@ -118,8 +118,8 @@ def recover_radius_mass(r_list, m_list, period, om_bar_sq_target, rtol=5e-4, ato
 
 
 if __name__ == "__main__":
-    r_eq = 12000  # in meters
-    mass = 1.8*1.9885e30  # in kg
+    r_eq = 10000  # in meters
+    mass = 1.4*1.9885e30  # in kg
     period = 1./581
     degrees = [90, 75, 62.5, 52.5, 45, 37.5, 27.5, 15, 0]
     print "Equatorial radius: {} km, mass: {} Msol, spin frequency: {:.1f} Hz\n".format(r_eq*1e-3, mass/1.9885e30, 1/period)
@@ -141,14 +141,14 @@ if __name__ == "__main__":
     print "Ellipciticy: {}, e²: {}, relative gravity change: {}".format(1 - newpolar[-1]/newpolar[0], 1 - (newpolar[-1]/newpolar[0])**2, grav[-1]/grav[0])
 
 
-#    om_bar_sq = find_x_ombarsq(r_eq, mass, period)[1]
-#    eps = 1 - newpolar[-1]/newpolar[0]
-#    gamma = (2*om_bar_sq + 4*eps) / (1 - om_bar_sq)
-#    c = newpolar[-1]
-#    a = newpolar[0]
-#    lhs = gamma*c/a
-#    rhs = (a**2 - c**2)/c**2
-#    print lhs, rhs, lhs/rhs 
+    om_bar_sq = find_x_ombarsq(r_eq, mass, period)[1]
+    eps = 1 - newpolar[-1]/newpolar[0]
+    gamma = (2*om_bar_sq + 4*eps) / (1 - om_bar_sq)
+    c = newpolar[-1]
+    a = newpolar[0]
+    lhs = gamma
+    rhs = (a**2 - c**2)/c**2
+    print "LHS: {} RHS: {} LHS/RHS: {} LHS*RHS: {}".format(lhs, rhs, lhs/rhs, lhs*rhs)
 
 
 

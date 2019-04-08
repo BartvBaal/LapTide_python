@@ -15,6 +15,7 @@ import helpers.rootfinder as roots
 import helpers.plotting as plotting
 import helpers.sanity_plots as sanplot
 import helpers.morsink_radius as oblate
+import helpers.LaPlace_asymptotes as asym
 
 
 def fullrange_multi_rootfind(m, kvals, qlists, aympcompare=False, saving=False):
@@ -104,13 +105,30 @@ def main():
     mass = 1.8*1.9855e30  # in kg
     period = np.inf  # no period so no spin so **should match old equations** like this
 #    fullrange_multi_rootfind_curvi(m, kvals, qlists, r_eq, mass, period, aympcompare=True)
-    start_time_new = time.time()
-    roots.multi_rootfind_curvilinear_new(m, qneg, is_even, 5.5, r_eq, mass, period)
-    end_time_new = time.time()
-    start_time_old = time.time()
-    roots.multi_rootfind_curvilinear(m, 0, qneg, is_even, r_eq, mass, period)
-    end_time_old = time.time()
-    print "New function took: {} seconds, old function took: {} seconds".format(end_time_new - start_time_new, end_time_old - start_time_old)
+
+    init_guess = asym.r_modes(m, k, -50.)
+    print init_guess
+    r_qlist = np.linspace(-50., -6.05, 250)  # r-modes are fine with far fewer steps really
+    qlist, found_lamlist = roots.multi_rootfind_curvilinear_new(m, r_qlist, is_even, init_guess, r_eq, mass, period, verbose=False, inc=1.05)
+
+    eq39 = lambda m, s, q : (m*q - m*m)**2 / (q*q * (2*s + 1)**2)
+    eq39_2nd = lambda m, s, q : (m*q - m*m)**2 / (q*q * (2*s + 1)**2) + (2. * ((m*q - m*m)**3)) / (q**4 * ((2.*s + 1)**4))
+    s = -k-1
+    asy = eq39(m, s, r_qlist)
+    asy_2nd = eq39_2nd(m, s, r_qlist)
+    plt.plot(qlist, found_lamlist)
+    plt.plot(qlist, asy, ls="--")
+    plt.plot(qlist, asy_2nd, ls=":")
+    plt.yscale('log')
+    plt.show()
+
+#    start_time_new = time.time()
+#    roots.multi_rootfind_curvilinear_new(m, qneg, is_even, 5.5, r_eq, mass, period)
+#    end_time_new = time.time()
+#    start_time_old = time.time()
+#    roots.multi_rootfind_curvilinear(m, 0, qneg, is_even, r_eq, mass, period)
+#    end_time_old = time.time()
+#    print "New function took: {} seconds, old function took: {} seconds".format(end_time_new - start_time_new, end_time_old - start_time_old)
 
     #TODO: need to fix the initial guess for higher spins
     # For 363/581 Hz the initial guess doesn't stradle a root!

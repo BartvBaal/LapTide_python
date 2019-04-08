@@ -8,12 +8,18 @@ def r_modes(m, k, q):
     TODO; figure out a better pattern to switch between single entry q and
     numpy arrays of q values
     """
-#    if type(m) != int or type(k) != int or type(q) != int:
-#        raise TypeError("Input parameters should be given as integers")
-    if m*q <= m*m:
-        raise ValueError("Invalid parameters; m*q must be greater than m*m")
-    if q == 0:
-        raise ValueError("Invalid parameter; q has to be non-zero")
+    if type(q) == int:
+        if m*q <= m*m:
+            raise ValueError("Invalid parameters; m*q must be greater than m*m")
+        if q == 0:
+            raise ValueError("Invalid parameter; q has to be non-zero")
+    elif type(q) == np.ndarray:
+        if m*q[m*q <= m*m]:
+            raise ValueError("Invalid parameters; all m*q must be greater than m*m")
+        if q[q == 0.]:
+            raise ValueError("Invalid parameter; all q have to be non-zero")
+    if type(m) != int or type(k) != int:
+        raise TypeError("Input parameters m and k should be given as integers")
     if k > m:  # Not sure on this constraint yet
         raise ValueError("Invalid parameter; k has to be lower than m")
     s = -k-1

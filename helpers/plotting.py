@@ -50,7 +50,8 @@ def asymptotic_plotting(m):
     Plots the asymptotic functions to the Laplace Tidal Equations
     Solid lines for second order, dashdotted line for the first order
     """
-#    l_eq_39 = lambda m, s, q : ( (m*q - m**2) / (q * (2.*s + 1.)) )**2  # < Need to update this to 2nd order term
+    eq39_fst = lambda m, s, q : (m*q - m*m)**2 / (q*q * (2*s + 1)**2)
+    eq39_snd = lambda m, s, q : (m*q - m*m)**2 / (q*q * (2*s + 1)**2) + (2. * ((m*q - m*m)**3)) / (q**4 * ((2.*s + 1)**4))
 #    l_eq_40_41 = lambda m, q : (q - m)**2
 
     eq38_fst = lambda m, s, q : (q**2) * ((2.*s + 1.)**2)
@@ -64,6 +65,7 @@ def asymptotic_plotting(m):
     g_mode_cond = np.abs(1)
     r_mode_cond = lambda m, s : ((2.*s + 1.)**2 + m**2) / np.abs(m)  # paper mistake in 2s+1 term
     k_mode_cond = lambda m : np.abs(3. / m)
+    y_mode_cond = lambda m : np.abs(m) + 1./np.abs(m)
     #y_mode_cond = lambda m, q : (m*q < m**2 and m*q > 0) ? r_mode_cond(m, 0) : g_mode_cond
 
     if m < 0:
@@ -75,6 +77,8 @@ def asymptotic_plotting(m):
 
     plot_function(eq38_fst, [m, 1], qneg, [np.abs(qneg)>1.], "blue", "-.")
     plot_function(eq38_snd, [m, 1], qneg, [np.abs(qneg)>1.], "blue", "-")
+    plot_function(eq39_fst, [m, 1], qneg, [np.abs(qneg)>r_mode_cond(m, 1)], "brown", "-.")
+    plot_function(eq39_snd, [m, 1], qneg, [np.abs(qneg)>r_mode_cond(m, 1)], "brown", "-")
     plot_function(eq38_fst, [m, 1], qpos, [np.abs(qpos)>1.], "purple", "-.")
     plot_function(eq38_snd, [m, 1], qpos, [np.abs(qpos)>1.], "purple", "-")
     plot_function(eq38_fst, [m, 2], qneg, [np.abs(qneg)>1.], "red", "-.")
@@ -82,7 +86,8 @@ def asymptotic_plotting(m):
     plot_function(eq38_fst, [m, 3], qneg, [np.abs(qneg)>1.], "orange", "-.")
     plot_function(eq38_snd, [m, 3], qneg, [np.abs(qneg)>1.], "orange", "-")
     plot_function(eq40, [m], qpos, [np.abs(qpos)>1.], "green", "-")  # its effecitvely a gmode constraint
-    plot_function(eq55, [m], qpos, [np.abs(qpos)>np.sqrt(3/(-m*qpos))], "cyan", "-")
+    plot_function(eq40, [m], qneg, [np.abs(qneg)>y_mode_cond(m)], "green", "-")
+    plot_function(eq55, [m], qpos, [np.abs(qpos)>k_mode_cond(m)], "cyan", "-")
     plt.yscale('log')
 
 

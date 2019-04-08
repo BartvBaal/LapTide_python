@@ -16,10 +16,11 @@ def r_modes(m, k, q):
         raise ValueError("Invalid parameter; q has to be non-zero")
     if k > m:  # Not sure on this constraint yet
         raise ValueError("Invalid parameter; k has to be lower than m")
+    s = -k-1
     n1 = (m*q - m*m)**2.
-    d1 = q*q * ((2.*k - 1)**2)
+    d1 = q*q * ((2.*s + 1)**2)
     n2 = 2. * ((m*q - m*m)**3)
-    d2 = q**4 * ((2.*k - 1)**4)
+    d2 = q**4 * ((2.*s + 1)**4)
     approx = (n1 / d1) + (n2 / d2)
     return approx
 

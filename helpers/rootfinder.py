@@ -92,12 +92,12 @@ def multi_rootfind_curvilinear_new(m, qlist, is_even, init_guess, r_eq, mass, pe
     Not yet faster than the old method, unfortunately. But at least it's not slower
     """
     root = init_guess
-    neg_allowed = True
+    neg_allowed = True  # init_guess might be too high or low so should allow pos&neg searching
     inc = inc  # qneg, k=2 will break if inc is too large!
     N_steps = 100
-    if qlist[-1]*m < 0:
-        print "\nAllowing negatives!\n"
-        neg_allowed = True
+#    if qlist[-1]*m < 0:
+#        print "\nAllowing negatives!\n"
+#        neg_allowed = True
 
     found_lamlist = np.arange(float(len(qlist)))
     fn = Curvilinear.solver_t(m, qlist[0], is_even, r_eq, mass, period)
@@ -111,6 +111,26 @@ def multi_rootfind_curvilinear_new(m, qlist, is_even, init_guess, r_eq, mass, pe
 
 #        np.put(found_lamlist, lam, root)
         found_lamlist[lam] = root
+        print q, root, bisec
+
+    return qlist, found_lamlist
+
+
+def multi_rootfind_fromguess(m, qlist, is_even, guesslist, r_eq, mass, period, verbose=False, inc=1.0033):
+    neg_allowed = True
+    inc = inc
+    N_steps = 100
+    found_lamlist = np.zeros(len(qlist))
+    fn = Curvilinear.solver_t(m, qlist[0], is_even, r_eq, mass, period)
+    straddle = Straddle.straddle_t(fn, inc, N_steps)
+
+    for i in range(len(qlist)):
+        q = qlist[i]
+        fn.set_q(q)
+        bisec = straddle.search_log(guesslist[i], verbose=verbose, neg_allowed=neg_allowed)
+        root = rootfinder_curvilinear(m, q, bisec, is_even, r_eq, mass, period)[0]
+
+        found_lamlist[i] = root
         print q, root, bisec
 
     return qlist, found_lamlist

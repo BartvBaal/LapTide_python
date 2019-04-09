@@ -28,16 +28,27 @@ class Mode_admin:
             return True
         return False
 
-    def get_wavemode(self):
+    def get_wavemode(self, direction=None):
         """
         Returns the wavemode for the given parameters. #TODO; expand this to include all wavemodes
         """
-        if self.k < -2:
+        if self.k <= -2:
             self.mode = "r mode"
-        elif self.k > 2:
+        elif self.k >= 2:
             self.mode = "g mode"
         else:
-            self.mode = "Mode depends on Prograde/Retrograde spin"
+            if not direction:  # this should now never happen anymore
+                self.mode = "Mode depends on Prograde/Retrograde spin"
+            elif direction.lower() in ["prograde", "pro"]:
+                if self.k == 1:
+                    self.mode = "yanai mode"
+                elif self.k == 0:
+                    self.mode = "kelvin mode"
+            elif direction.lower() in ["retrograde", "retro"]:
+                if self.k == -1:
+                    self.mode = "yanai mode"
+                elif self.k >= 0:
+                    self.mode = "g mode"
         return self.mode
 
     def validate_values(self):

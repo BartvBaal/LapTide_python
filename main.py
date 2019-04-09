@@ -70,6 +70,39 @@ def fullrange_multi_rootfind_curvi(m, kvals, qlists, r_eq, mass, period, \
     plt.show()
 
 
+def rootfind_any(m, k, qlist, r_eq=1e4, mass=1.4*1.9885e30, period=np.inf, verbose=False, inc=1.0033):
+    """
+    For a given m, k and qlist, and potentially for different radius, mass and
+    period as well, determines the wave mode and calculates the eigenvalues
+    from the asymptotically calculated values.
+    """
+    mode_admin = Property.Mode_admin(m, k)
+    mode_admin.validate_values()
+    is_even = mode_admin.is_even()
+    l = mode_admin.get_l()
+
+    if np.average(qlist) < 0:
+        direction = "retro"
+    else:
+        direction = "pro"
+
+    wavemode = mode_admin.get_wavemode(direction)
+    print is_even, l, wavemode
+
+    wavemode += "s"
+    if wavemode[0] == "g":
+        wavemode += "_list"
+    wavemode = wavemode.replace(" ", "_")
+    if wavemode[0] == "y" or wavemode[0] == "k":
+        args = m, qlist
+    else:
+        args = m, k, qlist
+    guesslist = getattr(asym, wavemode)(*args)
+
+    qlist, found_lamlist = roots.multi_rootfind_fromguess(m, qlist, is_even, guesslist, r_eq, mass, period, verbose=False, inc=inc)
+    plt.plot(qlist, found_lamlist)
+
+
 def main():
     # Need to consider if I want the inputs as m, l or m, k - using k for now
     if len(sys.argv) != 3:
@@ -95,42 +128,40 @@ def main():
     qlists = [qneg, qpos]
     kvals = [0, 1, 2]  # l=2,3,4
 
-#    r_list = np.linspace(9e3, 16.5e3, 375)
-#    m_list = np.linspace(1.2*1.9885e30, 2.75*1.9885e30, 325)
-#    period = 1./581 # 4U 1636-536
-##    period = 1./363 # 4U 1728-34
-#    oblate.recover_radius_mass(r_list, m_list, period, 0.1)
-
-    r_eq = 12000  # in meters
-    mass = 1.8*1.9855e30  # in kg
-    period = np.inf  # no period so no spin so **should match old equations** like this
-#    fullrange_multi_rootfind_curvi(m, kvals, qlists, r_eq, mass, period, aympcompare=True)
-
-    init_guess = asym.r_modes(m, k, -50.)
-    print init_guess
-    r_qlist = np.linspace(-50., -6.05, 250)  # r-modes are fine with far fewer steps really
-    guesslist = asym.r_modes(m, k, r_qlist)
-#    qlist, found_lamlist = roots.multi_rootfind_curvilinear_new(m, r_qlist, is_even, init_guess, r_eq, mass, period, verbose=False, inc=1.05)
-    qlist, found_lamlist = roots.multi_rootfind_fromguess(m, r_qlist, is_even, guesslist, r_eq, mass, period, verbose=False, inc=1.05)
-
-    eq39 = lambda m, s, q : (m*q - m*m)**2 / (q*q * (2*s + 1)**2)
-    eq39_2nd = lambda m, s, q : (m*q - m*m)**2 / (q*q * (2*s + 1)**2) + (2. * ((m*q - m*m)**3)) / (q**4 * ((2.*s + 1)**4))
-    s = -k-1
-    asy = eq39(m, s, r_qlist)
-    asy_2nd = eq39_2nd(m, s, r_qlist)
-    plt.plot(qlist, found_lamlist)
-    plt.plot(qlist, asy, ls="--")
-    plt.plot(qlist, asy_2nd, ls=":")
+    rootfind_any(m, 2, np.linspace(-10., -0.5, 340), inc=1.005)
+    rootfind_any(m, 1, np.linspace(-10., -0.5, 340), inc=1.05)
+    rootfind_any(m, 0, np.linspace(-10., -0.5, 340), inc=1.05)
+    rootfind_any(m, 2, np.linspace(10., 0.5, 340), inc=1.0075)
+    rootfind_any(m, 1, np.linspace(10., 0.5, 340), inc=1.05)
+    rootfind_any(m, 0, np.linspace(10., 0.5, 340), inc=1.05)
+    rootfind_any(m, -1, np.linspace(-10., -3.2, 250), inc=1.05)
+    rootfind_any(m, -2, np.linspace(-10., -6.1, 100), inc=1.05)
     plt.yscale('log')
     plt.show()
 
-#    start_time_new = time.time()
-#    roots.multi_rootfind_curvilinear_new(m, qneg, is_even, 5.5, r_eq, mass, period)
-#    end_time_new = time.time()
-#    start_time_old = time.time()
-#    roots.multi_rootfind_curvilinear(m, 0, qneg, is_even, r_eq, mass, period)
-#    end_time_old = time.time()
-#    print "New function took: {} seconds, old function took: {} seconds".format(end_time_new - start_time_new, end_time_old - start_time_old)
+
+#    r_eq = 12000  # in meters
+#    mass = 1.8*1.9855e30  # in kg
+#    period = np.inf  # no period so no spin so **should match old equations** like this
+##    fullrange_multi_rootfind_curvi(m, kvals, qlists, r_eq, mass, period, aympcompare=True)
+
+#    init_guess = asym.r_modes(m, k, -50.)
+#    print init_guess
+#    r_qlist = np.linspace(-50., -6.05, 250)  # r-modes are fine with far fewer steps really
+#    guesslist = asym.r_modes(m, k, r_qlist)
+##    qlist, found_lamlist = roots.multi_rootfind_curvilinear_new(m, r_qlist, is_even, init_guess, r_eq, mass, period, verbose=False, inc=1.05)
+#    qlist, found_lamlist = roots.multi_rootfind_fromguess(m, r_qlist, is_even, guesslist, r_eq, mass, period, verbose=False, inc=1.05)
+
+#    eq39 = lambda m, s, q : (m*q - m*m)**2 / (q*q * (2*s + 1)**2)
+#    eq39_2nd = lambda m, s, q : (m*q - m*m)**2 / (q*q * (2*s + 1)**2) + (2. * ((m*q - m*m)**3)) / (q**4 * ((2.*s + 1)**4))
+#    s = -k-1
+#    asy = eq39(m, s, r_qlist)
+#    asy_2nd = eq39_2nd(m, s, r_qlist)
+#    plt.plot(qlist, found_lamlist)
+#    plt.plot(qlist, asy, ls="--")
+#    plt.plot(qlist, asy_2nd, ls=":")
+#    plt.yscale('log')
+#    plt.show()
 
     #TODO: need to fix the initial guess for higher spins
     # For 363/581 Hz the initial guess doesn't stradle a root!

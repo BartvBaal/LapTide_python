@@ -106,7 +106,7 @@ def simple_numasyplot_rmodesINC(m, k, is_even):
     r_guesslist = asym.r_modes(m, k, r_qlist)
     y_guesslist = asym.yanai_modes(m, y_qlist)
     r_qlist, r_found_lamlist = roots.multi_rootfind_fromguess(m, r_qlist, is_even, r_guesslist, r_eq, mass, period, verbose=False, inc=1.05)
-    y_qlist, y_found_lamlist = roots.multi_rootfind_fromguess(m, y_qlist, False, y_guesslist, r_eq, mass, period, verbose=False, inc=1.08)  # Yanai modes are odd modes for m=-2
+    y_qlist, y_found_lamlist = roots.multi_rootfind_fromguess(m, y_qlist, not is_even, y_guesslist, r_eq, mass, period, verbose=False, inc=1.08)
 
     custom_lines = [Line2D([0], [0], color="black", lw=2.5, linestyle="--", label="Numeric"),
                     Line2D([0], [0], color="blue", lw=2.5, label="2nd order"),
@@ -118,18 +118,10 @@ def simple_numasyplot_rmodesINC(m, k, is_even):
     plt.plot(y_qlist, y_found_lamlist, ls="--", color='black')
 
     plt.xlim([-10, 10])
-    plt.ylim([.1, 6000])  #5500 works for this setup
+    plt.ylim([.1, 6000])
     plt.title("Asymptotic 1st and 2nd order compared with numerical solutions, m=-2")
     plt.xlabel(r"Spin parameter q = $2\Omega/\omega$")
     plt.ylabel(r"Eigenvalue $\lambda$")
-#    plt.text(-4.25, 1000, "g-mode", fontsize=21)
-#    plt.text(-4.75, 310, "g-mode", fontsize=21)
-#    plt.text(-4.75, 95, "g-mode", fontsize=21)
-#    plt.text(3.75, 220, "g-mode", fontsize=21)
-#    plt.text(4., 28, "y-mode", fontsize=21)
-#    plt.text(4, 4.5, "k-mode", fontsize=21)
-#    plt.legend(handles=custom_lines, fontsize=24, frameon=True, fancybox=True, edgecolor="#000000", loc='upper right', bbox_to_anchor=(1, 1))
-#    plt.savefig("TEST.png")
     plt.show()
 
 
@@ -306,7 +298,17 @@ def main():
 #    fullrange_multi_rootfind(m, qlists, kvals, aympcompare=True)  # Mostly for plotting functionality
 #    fullrange_multi_rootfind(m, [qneg], [2], aympcompare=True)  # Testing just for k=-1, negative part
 
+#    plotting.asymptotic_plotting(m)
+#    plt.show()
     simple_numasyplot_rmodesINC(m, k, is_even)
+    r_eq, mass = 1e4, 1.4*1.9885e30
+    for period in [np.inf, 1./100, 1./363, 1./581]:
+        r_qlist = np.linspace(-100., -7.85, 450)  # r-modes are fine with fewer steps really
+        r_guesslist = asym.r_modes(m, k, r_qlist)
+        r_qlist, r_found_lamlist = roots.multi_rootfind_fromguess(m, r_qlist, is_even, r_guesslist, r_eq, mass, period, verbose=False, inc=1.15)
+        plt.plot(r_qlist, r_found_lamlist, ls="--")
+    plt.show()
+
 #    error_numasyplot(m)
 #    compare_newfile(m)
 

@@ -41,10 +41,10 @@ def g_modes(m, k, q):
 #        raise TypeError("Input parameters should be given as integers")
 
     # Figure out pro/retro; q=0 case does not matter since the s terms drop
-    if q < 0:  # retrograde
-        s = k + 1.
-    else:  # prograde
+    if q*m < 0:  # prograde
         s = k - 1.
+    else:  # retrograde
+        s = k + 1.
     fo = q*q * ((2.*s + 1)**2)
     so = -2. * (m*q - m*m)
     approx = fo + so

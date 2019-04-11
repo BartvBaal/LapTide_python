@@ -30,7 +30,7 @@ class Mode_admin:
 
     def get_wavemode(self, direction=None):
         """
-        Returns the wavemode for the given parameters. #TODO; expand this to include all wavemodes
+        Returns the wavemode for the given parameters. #TODO; expand this to include different m?
         """
         if self.k <= -2:
             self.mode = "r mode"

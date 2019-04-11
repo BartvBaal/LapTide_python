@@ -93,7 +93,7 @@ def rootfind_any(m, k, qlist, r_eq=1e4, mass=1.4*1.9885e30, period=np.inf, verbo
     if wavemode[0] == "g":
         wavemode += "_list"
     wavemode = wavemode.replace(" ", "_")
-    if wavemode[0] == "y" or wavemode[0] == "k":
+    if wavemode[0] == "y" or wavemode[0] == "k":  # yanai and kelvin modes only have two arguments
         args = m, qlist
     else:
         args = m, k, qlist
@@ -128,14 +128,14 @@ def main():
     qlists = [qneg, qpos]
     kvals = [0, 1, 2]  # l=2,3,4
 
-    rootfind_any(m, 2, np.linspace(-10., -0.5, 340), inc=1.005)
-    rootfind_any(m, 1, np.linspace(-10., -0.5, 340), inc=1.05)
-    rootfind_any(m, 0, np.linspace(-10., -0.5, 340), inc=1.05)
-    rootfind_any(m, 2, np.linspace(10., 0.5, 340), inc=1.0075)
-    rootfind_any(m, 1, np.linspace(10., 0.5, 340), inc=1.05)
-    rootfind_any(m, 0, np.linspace(10., 0.5, 340), inc=1.05)
-    rootfind_any(m, -1, np.linspace(-10., -3.2, 250), inc=1.05)
-    rootfind_any(m, -2, np.linspace(-10., -6.1, 100), inc=1.05)
+    rootfind_any(m, 2, np.linspace(-10., -0.5, 170), inc=1.0075)
+    rootfind_any(m, 1, np.linspace(-10., -0.5, 170), inc=1.05)
+    rootfind_any(m, 0, np.linspace(-10., -0.5, 170), inc=1.05)
+    rootfind_any(m, 2, np.linspace(10., 0.5, 170), inc=1.0075)
+    rootfind_any(m, 1, np.linspace(10., 0.5, 170), inc=1.05)
+    rootfind_any(m, 0, np.linspace(10., 0.5, 170), inc=1.05)
+    rootfind_any(m, -1, np.linspace(-10., -3.2, 100), inc=1.05)
+    rootfind_any(m, -2, np.linspace(-10., -6.1, 50), inc=1.05)
     plt.yscale('log')
     plt.show()
 

@@ -1,5 +1,22 @@
 # I think a useful tool might be one that can work out some mode properties given a (m, l) or (m, k), for instance: whether it is odd/even, type of mode (g, r, Kelvin, Yanai), the asymptotic approximation with q, location of the equatorial waveguide with q. I suggest writing a header that can work this out and implements the approximations - you could call this something like mode-admin.
 import numpy as np
+import warnings
+
+import os
+cwd = os.getcwd()
+
+class InputWarning(UserWarning):
+    pass
+
+def custom_formatwarning(msg, *args, **kwargs):
+    # ignore everything except the message
+    name = args[0].__name__
+    loc = args[1]
+    line = args[2]
+    warningloc = "{}:{}: {}: ".format(loc.replace(cwd, "")[1:], line, name)
+    return warningloc + str(msg) + '\n'
+warnings.formatwarning = custom_formatwarning
+
 
 class Mode_admin:
     def __init__(self, m, k):
@@ -53,7 +70,7 @@ class Mode_admin:
 
     def validate_values(self):
         if self.m > self.l:
-            raise RuntimeError("Legendre polynomials undefined for m>l, input: ({}, {})".format(self.m, self.l))
+            warnings.warn("Legendre polynomials undefined for m>l, input: ({}, {}). Eigenvalues might not exist.".format(self.m, self.l), InputWarning)
 
 
 class Curvi_admin:
@@ -109,7 +126,6 @@ class Curvi_admin:
 
     def validate_values(self):
         if self.m > self.l:
-            raise RuntimeError("Legendre polynomials undefined for m>l, input: ({}, {})".format(self.m, self.l))
-    
+            warnings.warn("Legendre polynomials undefined for m>l, input: ({}, {}). Eigenvalues might not exist.".format(self.m, self.l), InputWarning)
     
     

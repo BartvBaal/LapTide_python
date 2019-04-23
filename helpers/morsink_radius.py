@@ -118,8 +118,8 @@ def recover_radius_mass(r_list, m_list, period, om_bar_sq_target, rtol=5e-4, ato
 
 
 if __name__ == "__main__":
-    r_eq = 10000  # in meters
-    mass = 1.4*1.9885e30  # in kg
+    r_eq = 12000  # in meters
+    mass = 1.6*1.9885e30  # in kg
     period = 1./581
     degrees = [90, 75, 62.5, 52.5, 45, 37.5, 27.5, 15, 0]
     print "Equatorial radius: {} km, mass: {} Msol, spin frequency: {:.1f} Hz\n".format(r_eq*1e-3, mass/1.9885e30, 1/period)

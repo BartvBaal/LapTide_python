@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import scipy.special as special
-
+from functools import partial
 import matplotlib.pyplot as plt
 
 import classes.Curvilinear as Curvilinear
@@ -8,8 +9,9 @@ import classes.Curvilinear as Curvilinear
 import helpers.rootfinder as roots
 import helpers.Property as Property
 import helpers.LaPlace_asymptotes as asym
+import helpers.gravity_functions as grav
 
-def rootfind_any(m, k, q, r_eq=1e4, mass=1.4*1.9885e30, period=np.inf, verbose=False, inc=1.0033):
+def rootfind_dimless(m, k, q, ecc=0, dlngrav=partial(grav.chi_gravity_deriv, 0.), verbose=False, inc=1.0033):
     """
     For a given m, k and qlist, and potentially for different radius, mass and
     period as well, determines the wave mode and calculates the eigenvalues
@@ -38,7 +40,7 @@ def rootfind_any(m, k, q, r_eq=1e4, mass=1.4*1.9885e30, period=np.inf, verbose=F
         args = m, k, q
     guess = getattr(asym, wavemode)(*args)
 
-    qlist, found_lamlist = roots.multi_rootfind_fromguess(m, q, is_even, guess, r_eq, mass, period, verbose=verbose, inc=inc)
+    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(m, q, is_even, guess, ecc, dlngrav, verbose=False, inc=inc)
     return guess, found_lamlist, wavemode.split("_")[0], direction
 
 
@@ -70,9 +72,33 @@ def houghTilde(s, sig, m, lam, q):
     return prefactor * hermites * exp
 
 
+def kelvinhough(mu, m, q):
+    min_mq_root = (-m*q)**.5
+    tau = min_mq_root * mu
+    return np.exp(-(tau**2)/2.)
+    
+
+def kelvinhoughHat(mu, m, q):
+    min_mq_root = (-m*q)**.5
+    tau = min_mq_root * mu
+    fst = 1./min_mq_root
+    snd = -(m*m) / (2*m*q + 1.)
+    thr = tau * np.exp(-(tau**2)/2.)
+    return fst * snd * thr
+
+
+def kelvinhoughTilde(mu, m, q):
+    min_mq_root = (-m*q)**.5
+    tau = min_mq_root * mu
+    fst = -m
+    brckt = tau*tau / (2*m*q + 1) + 1
+    exp = np.exp(-(tau**2)/2.)
+    return fst * brckt * exp
+
+
 def numerics(ode_class, ode_args, lam, is_even, N):
     ode_args.insert(2, is_even)
-    ode_solver = ode_class.solver_t(*ode_args)
+    ode_solver = ode_class.solver_t_dimless(*ode_args)
 
     steps = np.linspace(ode_class.t0, ode_class.t1, N)
     [P, Q] = ode_solver.interp(lam, steps)
@@ -83,17 +109,20 @@ def normalize(array):
     return array/max(np.abs(array))
 
 
-if __name__ == "__main__":
-#    m, k, s, q = -2, 2, 1, 3  # Pro g mode
-#    m, k, s, q = 2, 2, 3, 3  # Retro g mode
-#    m, k, s, q = -2, 1, 0, 3  # Pro Yanai
-#    m, k, s, q = 2, -1, 0, 6  # Retro Yanai
-    m, k, s, q = 2, -2, 1, 6.005  # Retro r mode
-#    m, k, s, q = -2, 0, -1, 3  # Kelvin check - this should use different functions!
-#    m, k, s, q = -2, 0, -1, 10  # LeeSaio1997 check - these do not require new functions ?
+def townsendify(hough, houghhat, houghtilde, k, m):
+    if k%2 == 0:
+        divisor = hough[-1]
+    else:
+        divisor = -houghhat[-1]
+    if m < 0:
+        houghtilde *= -1
+    return hough/divisor, houghhat/divisor, houghtilde/divisor
 
+
+def make_houghs(m, k, s, q, ecc, chi):
     N = 125
-    guess, lam, wavename, direc = rootfind_any(m, k, np.asarray([q]), verbose=False, inc=1.075)
+    dlngrav = partial(grav.chi_gravity_deriv, chi)
+    guess, lam, wavename, direc = rootfind_dimless(m, k, np.asarray([q]), ecc, dlngrav, verbose=False, inc=1.075)
     mu = np.linspace(1., 0., N)
     L = lam**.5
     Lnu = L * q  # it should just be q but that breaks if q is negative?
@@ -105,41 +134,68 @@ if __name__ == "__main__":
 
     # Numeric values
     is_even = Curvilinear.check_is_even(m, k)
-    num_hough, num_houghHat = numerics(Curvilinear, [m, q, 1e4, 1.4*1.9885e30, np.inf], lam, is_even, N)
+    num_hough, num_houghHat = numerics(Curvilinear, [m, q, ecc, dlngrav], lam, is_even, N)
     num_houghTilde = -m * num_hough - q*mu * num_houghHat
 
     ## Analytic values
     ana_houghHat = houghHat(s, guesssig)
     ana_hough = hough(s, guesssig, m, guess, q)
     ana_houghTilde = houghTilde(s, guesssig, m, guess, q)
+    if wavename == "kelvin":
+        ana_houghHat = kelvinhoughHat(mu, m, q)
+        ana_hough = kelvinhough(mu, m, q)
+        ana_houghTilde = kelvinhoughTilde(mu, m, q)
 
-    norm = True
-    if norm:
-        num_hough, num_houghHat, num_houghTilde = normalize(num_hough), normalize(num_houghHat), normalize(num_houghTilde)
-        ana_hough, ana_houghHat, ana_houghTilde = normalize(ana_hough), normalize(ana_houghHat), normalize(ana_houghTilde)
+    num_hough, num_houghHat, num_houghTilde = townsendify(num_hough, num_houghHat, num_houghTilde, k, m)
+    ana_hough, ana_houghHat, ana_houghTilde = townsendify(ana_hough, ana_houghHat, ana_houghTilde, k, m)
 
-    # This doesn't work for Kelvin modes I think
-    if np.abs(m) == m or not is_even:
-        ana_hough *= -1
-        ana_houghHat *= -1
-        ana_houghTilde *= -1
-    
-    plt.subplot(3, 1, 1)
-    plt.title("m: {}, k: {}, s: {}, q: {}  ({}grade {})".format(m, k, s, q, direc, wavename))
-    plt.plot(mu, num_hough, ls="--")
-    plt.plot(mu, ana_hough)
-    plt.ylabel(r"$\Theta(\sigma)$")
-    plt.xlim([0, 1])
-    plt.subplot(3, 1, 2)
-    plt.plot(mu, num_houghHat, ls="--")
-    plt.plot(mu, ana_houghHat)
-    plt.ylabel(r"$\hat\Theta(\sigma)$")
-    plt.xlim([0, 1])
-    plt.subplot(3, 1, 3)
-    plt.plot(mu, num_houghTilde, ls="--")
-    plt.plot(mu, ana_houghTilde)
-    plt.ylabel(r"$\tilde\Theta(\sigma)$")
-    plt.xlabel(r"$\mu \equiv \cos(\theta)$")
-    plt.xlim([0, 1])
+    fig = plt.figure()
+    ax1 = fig.add_subplot(3, 1, 1)
+    ax1.set_title("m: {}, k: {}, s: {}, q: {}  ({}grade {}); ecc: {}, $\chi$: {}".format(m, k, s, q, direc, wavename, ecc, chi))
+    ax1.plot(mu, num_hough, ls="--")
+    ax1.plot(mu, ana_hough)
+    ax1.set_ylabel(r"$\Theta(\sigma)$")
+    ax1.set_xlim([0, 1])
+    ax2 = fig.add_subplot(3, 1, 2)
+    ax2.plot(mu, num_houghHat, ls="--")
+    ax2.plot(mu, ana_houghHat)
+    ax2.set_ylabel(r"$\hat\Theta(\sigma)$")
+    ax2.set_xlim([0, 1])
+    ax3 = fig.add_subplot(3, 1, 3)
+    ax3.plot(mu, num_houghTilde, ls="--")
+    ax3.plot(mu, ana_houghTilde)
+    ax3.set_ylabel(r"$\tilde\Theta(\sigma)$")
+    ax3.set_xlabel(r"$\mu \equiv \cos(\theta)$")
+    ax3.set_xlim([0, 1])
+
+    ax1.tick_params(axis='y', which='both', left='on', right='on')
+    ax2.tick_params(axis='y', which='both', left='on', right='on')
+    ax3.tick_params(axis='y', which='both', left='on', right='on')
     plt.show()
+
+
+
+if __name__ == "__main__":
+#    m, k, s, q = -2, 2, 1, 3  # Pro g mode
+#    m, k, s, q = 2, 2, 3, 3  # Retro g mode
+#    m, k, s, q = 2, 1, 2, 3  # Retro g mode
+#    m, k, s, q = 2, 0, 1, 3  # Retro g mode
+#    m, k, s, q = -2, 1, 0, 3  # Pro Yanai
+#    m, k, s, q = 2, -1, 0, 6  # Retro Yanai
+#    m, k, s, q = 2, -2, 1, 12.5  # Retro r mode
+#    m, k, s, q = -2, 0, -1, 3  # Kelvin check - this should use different functions!
+#    m, k, s, q = -2, 0, -1, 10  # LeeSaio1997 check - these do not require new functions ?
+
+    ecc = 0.15
+    chi = 0.3
+
+#    make_houghs(m, k, s, q, ecc, chi)
+
+    mlist = [-2, 2, -2, 2, -2, 2, 2, 2]
+    klist = [2, 2, 1, 1, 0, 0, -1, -2]
+    slist = [1, 3, 0, 2, -1, 1, 0, 1]
+    qlist = [3, 3, 3, 3, 3, 3, 6, 15]
+
+    for m, k, s, q in zip(mlist, klist, slist, qlist):
+        make_houghs(m, k, s, q, ecc, chi)
 

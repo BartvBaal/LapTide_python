@@ -2,6 +2,7 @@
 import sys
 import time
 import numpy as np
+from functools import partial
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
@@ -16,6 +17,7 @@ import helpers.plotting as plotting
 import helpers.sanity_plots as sanplot
 import helpers.morsink_radius as oblate
 import helpers.LaPlace_asymptotes as asym
+import helpers.gravity_functions as grav
 
 
 def fullrange_multi_rootfind(m, kvals, qlists, aympcompare=False, saving=False):
@@ -103,6 +105,39 @@ def rootfind_any(m, k, qlist, r_eq=1e4, mass=1.4*1.9885e30, period=np.inf, verbo
     plt.plot(qlist, found_lamlist)
 
 
+def rootfind_dimless(m, k, qlist, ecc=0., dlngrav=partial(grav.chi_gravity_deriv, 0.), verbose=False, inc=1.0033):
+    """
+    For a given m, k and qlist, and potentially for different radius, mass and
+    period as well, determines the wave mode and calculates the eigenvalues
+    from the asymptotically calculated values.
+    """
+    mode_admin = Property.Mode_admin(m, k)
+    mode_admin.validate_values()
+    is_even = mode_admin.is_even()
+    l = mode_admin.get_l()
+
+    if np.average(qlist) < 0:
+        direction = "retro"
+    else:
+        direction = "pro"
+
+    wavemode = mode_admin.get_wavemode(direction)
+    print is_even, l, wavemode
+
+    wavemode += "s"
+    if wavemode[0] == "g":
+        wavemode += "_list"
+    wavemode = wavemode.replace(" ", "_")
+    if wavemode[0] == "y" or wavemode[0] == "k":  # yanai and kelvin modes only have two arguments
+        args = m, qlist
+    else:
+        args = m, k, qlist
+    guesslist = getattr(asym, wavemode)(*args)
+
+    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=False, inc=inc)
+    plt.plot(qlist, found_lamlist)
+
+
 def main():
     # Need to consider if I want the inputs as m, l or m, k - using k for now
     if len(sys.argv) != 3:
@@ -128,16 +163,39 @@ def main():
     qlists = [qneg, qpos]
     kvals = [0, 1, 2]  # l=2,3,4
 
-    rootfind_any(m, 2, np.linspace(-10., -0.5, 170), inc=1.0075)
-    rootfind_any(m, 1, np.linspace(-10., -0.5, 170), inc=1.05)
-    rootfind_any(m, 0, np.linspace(-10., -0.5, 170), inc=1.05)
-    rootfind_any(m, 2, np.linspace(10., 0.5, 170), inc=1.0075)
-    rootfind_any(m, 1, np.linspace(10., 0.5, 170), inc=1.05)
-    rootfind_any(m, 0, np.linspace(10., 0.5, 170), inc=1.05)
-    rootfind_any(m, -1, np.linspace(-10., -3.2, 100), inc=1.05)
-    rootfind_any(m, -2, np.linspace(-10., -6.1, 50), inc=1.05)
+#    rootfind_any(m, 2, np.linspace(-10., -0.5, 170), inc=1.0075)
+#    rootfind_any(m, 1, np.linspace(-10., -0.5, 170), inc=1.05)
+#    rootfind_any(m, 0, np.linspace(-10., -0.5, 170), inc=1.05)
+#    rootfind_any(m, 2, np.linspace(10., 0.5, 170), inc=1.0075)
+#    rootfind_any(m, 1, np.linspace(10., 0.5, 170), inc=1.05)
+#    rootfind_any(m, 0, np.linspace(10., 0.5, 170), inc=1.05)
+#    rootfind_any(m, -1, np.linspace(-10., -3.2, 100), inc=1.05)
+#    rootfind_any(m, -2, np.linspace(-10., -6.1, 50), inc=1.05)
+#    plt.yscale('log')
+#    plt.show()
+
+    chi = 0.27
+    dlngrav=partial(grav.chi_gravity_deriv, chi)
+#    r_eq, mass, period = 1e4, 1.4*1.9885e30, 1./361
+#    morsink=partial(grav.AM14_gravity_deriv, r_eq, mass, period)  # Can use physical parameters this way
+#    rootfind_dimless(m, 2, np.linspace(-9, -0.5, 170), ecc=.15, dlngrav=dlngrav, inc=1.0075)
+#    rootfind_dimless(m, 2, np.linspace(-10, -0.5, 170), ecc=.05, inc=1.0075)
+#    rootfind_dimless(m, 2, np.linspace(-10, -0.5, 170), inc=1.0075)
+#    plt.yscale('log')
+#    plt.show()
+
+    rootfind_dimless(m, -2, np.linspace(-175, -10.5, 220), ecc=.12, dlngrav=dlngrav, inc=1.075)
+    rootfind_dimless(m, -2, np.linspace(-175, -10.5, 220), ecc=.12, inc=1.075)
+    rootfind_dimless(m, -2, np.linspace(-175, -10.5, 220), inc=1.075)
     plt.yscale('log')
     plt.show()
+
+#    rootfind_dimless(m, -2, np.linspace(-25., -10, 80), ecc=.02, inc=1.025)
+#    rootfind_dimless(m, -2, np.linspace(-25., -10, 80), ecc=.02, inc=1.025)
+#    rootfind_dimless(m, -2, np.linspace(-25., -10, 80), ecc=.002, inc=1.025)
+#    rootfind_dimless(m, -2, np.linspace(-25., -10, 80), inc=1.05)
+#    plt.yscale('log')
+#    plt.show()
 
 
 #    r_eq = 12000  # in meters

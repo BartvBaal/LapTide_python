@@ -298,16 +298,26 @@ def main():
 #    fullrange_multi_rootfind(m, qlists, kvals, aympcompare=True)  # Mostly for plotting functionality
 #    fullrange_multi_rootfind(m, [qneg], [2], aympcompare=True)  # Testing just for k=-1, negative part
 
+    r_eq, mass, period = 1.2e4, 1.6*1.9885e30, 1./581
+    x, om_bar_sq = oblate.find_x_ombarsq(r_eq, mass, period)
+    r_polar = r_eq*oblate.calc_radius_14_dimless(x, om_bar_sq, 0.)
+    eps = 1 - (r_polar / r_eq)
+    ecc = 1 - (r_polar / r_eq)**2
+    sigma = (r_polar / r_eq)**2
+    Gamma = (2*om_bar_sq + 4*eps) / (1-om_bar_sq)
+    print "sigma: {}, Gamma: {}, ecc: {}".format(sigma, Gamma, ecc)
+
 #    plotting.asymptotic_plotting(m)
-#    plt.show()
-    simple_numasyplot_rmodesINC(m, k, is_even)
-    r_eq, mass = 1e4, 1.4*1.9885e30
-    for period in [np.inf, 1./100, 1./363, 1./581]:
-        r_qlist = np.linspace(-100., -7.85, 450)  # r-modes are fine with fewer steps really
-        r_guesslist = asym.r_modes(m, k, r_qlist)
-        r_qlist, r_found_lamlist = roots.multi_rootfind_fromguess(m, r_qlist, is_even, r_guesslist, r_eq, mass, period, verbose=False, inc=1.15)
-        plt.plot(r_qlist, r_found_lamlist, ls="--")
+    plotting.curvi_asymptotic_plotting(m, sigma, Gamma, ecc)
     plt.show()
+#    simple_numasyplot_rmodesINC(m, k, is_even)
+#    r_eq, mass = 1e4, 1.4*1.9885e30
+#    for period in [np.inf, 1./100, 1./363, 1./581]:
+#        r_qlist = np.linspace(-100., -7.85, 450)  # r-modes are fine with fewer steps really
+#        r_guesslist = asym.r_modes(m, k, r_qlist)
+#        r_qlist, r_found_lamlist = roots.multi_rootfind_fromguess(m, r_qlist, is_even, r_guesslist, r_eq, mass, period, verbose=False, inc=1.15)
+#        plt.plot(r_qlist, r_found_lamlist, ls="--")
+#    plt.show()
 
 #    error_numasyplot(m)
 #    compare_newfile(m)

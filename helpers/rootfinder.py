@@ -26,6 +26,16 @@ def rootfinder_curvilinear(m, q, lamlist, is_even, r_eq, mass, period):
     return optimize.brentq(shoot_curvilinear, lamlist[0], lamlist[1], args=(m, q, is_even, r_eq, mass, period), full_output=True)
 
 
+def shoot_curvi_dimless(lam, m, q, is_even, ecc, dlngrav):
+    curvi_solver = Curvilinear.solver_t_dimless(m, q, is_even, ecc, dlngrav)
+    return curvi_solver(lam)
+
+
+def rootfinder_curvi_dimless(m, q, lamlist, is_even, ecc, dlngrav):
+    return optimize.brentq(shoot_curvi_dimless, lamlist[0], lamlist[1], args=(m, q, is_even, ecc, dlngrav), full_output=True)
+
+
+
 def straddlefinder(fn, x0, verbose=False, neg_allowed=False):
     """
     For a given function fn and starting guess x0, it will look for a straddling
@@ -167,11 +177,22 @@ def multi_rootfind_curvilinear(m, k, qlist, is_even, r_eq, mass, period):
     return qlist, found_lamlist
 
 
-def multi_rootfind_curvilinear_adminversion(curvi_admin, r_eq, mass, period, verbose=False):
-    """
-    Takes in a curvi_admin object which already has all the information for m,
-    k and qlist for which to calculate the eigenvalues.
-    Since curvi_admin is not yet operational this function is void for now
-    """
-    pass
+def multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=False, inc=1.0033):
+    neg_allowed = True
+    inc = inc
+    N_steps = 100
+    found_lamlist = np.zeros(len(qlist))
+    fn = Curvilinear.solver_t_dimless(m, qlist[0], is_even, ecc, dlngrav)
+    straddle = Straddle.straddle_t(fn, inc, N_steps)
+
+    for i in range(len(qlist)):
+        q = qlist[i]
+        fn.set_q(q)
+        bisec = straddle.search_log(guesslist[i], verbose=verbose, neg_allowed=neg_allowed)
+        root = rootfinder_curvi_dimless(m, q, bisec, is_even, ecc, dlngrav)[0]
+
+        found_lamlist[i] = root
+        print q, root, bisec
+
+    return qlist, found_lamlist
 

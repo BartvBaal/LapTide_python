@@ -16,6 +16,7 @@ import numpy as np
 from scipy.integrate import ode
 from scipy.integrate import odeint
 from scipy.interpolate import interp1d
+from functools import partial
 
 import Observers
 import helpers.morsink_radius as oblate
@@ -48,6 +49,7 @@ def is_even_str(is_even):
 
 def eigval(l):
     return l*(l+1.0)
+
 
 ## -------------------------------------------------------------------------- ##
 
@@ -121,7 +123,7 @@ def run_ode(cur, obs):
     # stepper = 'dopri5'
     stepper = 'dop853'
     atol = 0.
-    rtol = 1./(2**30)
+    rtol = 1./(2**32)
     nsteps = 2000
     y0 = cur.init_y()
     solver = ode(cur)
@@ -192,61 +194,110 @@ class solver_t:
         Q = interp1d(t_interp, y_interp[:,1], kind='cubic')
         return np.array([P(steps), Q(steps)])
 
+## -------------------------------------------------------------------------- ##
 
 
 ## Version with ecc and dlngrav as input parameters, rather than physical properties
-#class ODE_t:
-#    """Return RHS of ODE, and helpful functions for transformation"""
-#    # TODO: add in the parameters required for the new ODE, which are:
-#        # sigma (-> eccentricity; e^2 - x is called "t" and thus present already)
-#        # dxln(grav) (= 2\Gamma x / (2 + x^2*\Gamma))
-#            # \Gamma \equiv (2\bar\Omega^2 + 4\epsilon) / (1 - \bar\Omega^2)
-#        # With eccentricity, epsilon and om_bar_sq the parameters above are set
-#            # We need R_{eq} and R_{polar} for ecc/eps
-#            # We need R_{eq}, \Omega *and* M for om_bar_sq&R_{polar}
-#            # Fortunately we can choose these at the start of the simulation
-#            # and they will remain constants, but the initial conditions of the
-#            # star will now matter for the outcome
-#    # TODO: decide if I will input R_eq, R_polar, M, Omega *or* sigma, Gamma *or* x, om_bar_sq
-#    def __init__(self, m, q, lam, ecc, dlngrav):  #r_eq, mass, period):
-#        self.m = 1. * m
-#        self.q = 1. * q
-#        self.msq = m*m
-#        self.qsq = q*q
+class ODE_t_dimless:
+    """Return RHS of ODE, and helpful functions for transformation"""
+    # TODO: add in the parameters required for the new ODE, which are:
+        # sigma (-> eccentricity; e^2 - x is called "t" and thus present already)
+        # dxln(grav) (= 2\Gamma x / (2 + x^2*\Gamma))
+            # \Gamma \equiv (2\bar\Omega^2 + 4\epsilon) / (1 - \bar\Omega^2)
+        # With eccentricity, epsilon and om_bar_sq the parameters above are set
+            # We need R_{eq} and R_{polar} for ecc/eps
+            # We need R_{eq}, \Omega *and* M for om_bar_sq&R_{polar}
+            # Fortunately we can choose these at the start of the simulation
+            # and they will remain constants, but the initial conditions of the
+            # star will now matter for the outcome
+    # TODO: decide if I will input R_eq, R_polar, M, Omega *or* sigma, Gamma *or* x, om_bar_sq
+    def __init__(self, m, q, lam, ecc, dlngrav):  #r_eq, mass, period):
+        self.m = 1. * m
+        self.q = 1. * q
+        self.msq = m*m
+        self.qsq = q*q
 
-#        self.ecc = ecc
-#        self.dlngrav = dlngrav
+        self.ecc = ecc
+        self.dlngrav = dlngrav  # this stores the gravity function with chi set
 
-#        self.alpha = .5 * abs(self.m)
-#        self.lam = 1. * lam
+        self.alpha = .5 * abs(self.m)
+        self.lam = 1. * lam
 
-#    def init_y(self):
-#        y0 = 1.0e-4
-#        sig = np.sqrt(1 - self.ecc * (1 - y0**2))
-#        y1 = (2 * self.alpha + self.m * self.q)*t0*y0 / (sig*(1 - t0*t0*self.qsq/sig/sig))
-#        return [y0, y1]  # Starting point, variation of RHS of eq (10)
+    def init_y(self):
+        y0 = 1.0e-4
+        sig = np.sqrt(1 - self.ecc * (1 - y0**2))
+        y1 = (2 * self.alpha + self.m * self.q)*t0*y0 / (sig*(1 - t0*t0*self.qsq/sig/sig))
+        return [y0, y1]  # Starting point, variation of RHS of eq (10)
 
-#    def coeffs(self, t):
-#        ## TODO: update as this is now Curvilinear!, not Legendre!
-#        sinsq = 1. - t*t
-#        twoax = 2. * self.alpha * t
-#        return np.array([twoax / sinsq, -1. / sinsq, self.lam - self.msq / sinsq, twoax / sinsq])
+    def coeffs(self, t):
+        ## TODO: update as this is now Curvilinear!, not Legendre!
+        sinsq = 1. - t*t
+        twoax = 2. * self.alpha * t
+        return np.array([twoax / sinsq, -1. / sinsq, self.lam - self.msq / sinsq, twoax / sinsq])
 
-#    def __call__(self, t, y):
-#    # Comments show what variables are called in legendre-ode_derivation.pdf
-#        sinsq = 1. - t*t  # 1-(x**2) (\equiv 1-\mu^2 \equiv sin^2 => name)
-#        twoax = 2. * self.alpha * t  # 2*alpha*x
-#        mqx = self.m * self.q * t  # m*q*x
-#        sig = np.sqrt(1 - self.ecc * sinsq)
-#        qxsqmo_sigcor = ((self.qsq * t*t / (sig*sig)) - 1) *sig  # [(x^2*q^2/sig^2)-1]*sig
-#        dlng = self.dlngrav(t)
-#        dy0dt = ( (twoax + mqx)*y[0] + qxsqmo_sigcor*y[1] ) / sinsq  # eq (8), rewritten
-##        dy1dt = ( (self.lam*sinsq - self.msq)*y[0] + (twoax - mqx)*y[1] ) / sinsq
-#        dy1dt = (dlng + sig*self.lam)*y[0] - \
-#                (sig*self.msq*y[0] - (twoax - mqx)*y[1]) / sinsq  # eq(9), rewritten
-#        return [dy0dt, dy1dt]
+    def __call__(self, t, y):
+    # Comments show what variables are called in legendre-ode_derivation.pdf
+        sinsq = 1. - t*t  # 1-(x**2) (\equiv 1-\mu^2 \equiv sin^2 => name)
+        twoax = 2. * self.alpha * t  # 2*alpha*x
+        mqx = self.m * self.q * t  # m*q*x
+        sig = np.sqrt(1 - self.ecc * sinsq)
+        qxsqmo_sigcor = ((self.qsq * t*t / (sig*sig)) - 1) *sig  # [(x^2*q^2/sig^2)-1]*sig
+        dlng = self.dlngrav(t)
+        dy0dt = ( (twoax + mqx)*y[0] + qxsqmo_sigcor*y[1] ) / sinsq  # eq (8), rewritten
+#        dy1dt = ( (self.lam*sinsq - self.msq)*y[0] + (twoax - mqx)*y[1] ) / sinsq
+        dy1dt = (dlng + sig*self.lam)*y[0] - \
+                (sig*self.msq*y[0] - (twoax - mqx)*y[1]) / sinsq  # eq(9), rewritten
+        return [dy0dt, dy1dt]
 
-#    def transform(self, steps, solun):
-#        for t, y in zip(steps, solun):
-#            one_m_xsq_a = np.power(1. - t*t, self.alpha)
-#            y *= one_m_xsq_a
+    def transform(self, steps, solun):
+        for t, y in zip(steps, solun):
+            one_m_xsq_a = np.power(1. - t*t, self.alpha)
+            y *= one_m_xsq_a
+
+
+class solver_t_dimless:
+    """Shoot for x=0 from x=1-eps, can also save eigenvalues of solution"""
+    def __init__(self, m, q, is_even, ecc, dlngrav):
+        self.m = m
+        self.q = q
+        self.score = score_t(is_even)
+        self.ecc = ecc
+        self.dlngrav = dlngrav
+
+    def set_m(self, m):
+        self.m = m
+
+    def set_q(self, q):
+        self.q = q
+
+    def set_is_even(self, is_even):
+        self.score.set_idx(is_even)
+
+    def shoot(self, lam):
+        cur = ODE_t_dimless(self.m, self.q, lam, self.ecc, self.dlngrav)
+        obs = Observers.max_t()
+        y1 = run_ode(cur, obs)
+        return self.score(y1 / obs.max_f)
+
+    def __call__(self, lam):
+        return self.shoot(lam)
+
+    def save(self, lam):
+        cur = ODE_t_dimless(self.m, self.q, lam, self.ecc, self.dlngrav)
+        obs = Observers.save_t()
+        run_ode(cur, obs)
+        steps = obs.steps()
+        solun = obs.solun()
+        cur.transform(steps, solun)
+        N = norm(solun[:,0])
+        return steps, solun / N
+
+    def interp(self, lam, steps):
+        """note: interpolation is performed using cubic spline.
+        Should probably check how scipy.integrate.solve_ivp interpolates;
+        possibly uses dense output stepper for interpolation"""
+        t_interp, y_interp = self.save(lam)
+        P = interp1d(t_interp, y_interp[:,0], kind='cubic')
+        Q = interp1d(t_interp, y_interp[:,1], kind='cubic')
+        return np.array([P(steps), Q(steps)])
+

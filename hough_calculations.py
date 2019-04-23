@@ -152,8 +152,8 @@ def make_houghs(m, k, s, q, ecc, chi):
     fig = plt.figure()
     ax1 = fig.add_subplot(3, 1, 1)
     ax1.set_title("m: {}, k: {}, s: {}, q: {}  ({}grade {}); ecc: {}, $\chi$: {}".format(m, k, s, q, direc, wavename, ecc, chi))
-    ax1.plot(mu, num_hough, ls="--")
-    ax1.plot(mu, ana_hough)
+    ax1.plot(mu, num_hough, ls="--", label="Numeric")
+    ax1.plot(mu, ana_hough, label="Analytic")
     ax1.set_ylabel(r"$\Theta(\sigma)$")
     ax1.set_xlim([0, 1])
     ax2 = fig.add_subplot(3, 1, 2)
@@ -171,13 +171,13 @@ def make_houghs(m, k, s, q, ecc, chi):
     ax1.tick_params(axis='y', which='both', left='on', right='on')
     ax2.tick_params(axis='y', which='both', left='on', right='on')
     ax3.tick_params(axis='y', which='both', left='on', right='on')
+    ax1.legend()
     plt.show()
-
 
 
 if __name__ == "__main__":
 #    m, k, s, q = -2, 2, 1, 3  # Pro g mode
-#    m, k, s, q = 2, 2, 3, 3  # Retro g mode
+    m, k, s, q = 2, 2, 3, 2.3  # Retro g mode
 #    m, k, s, q = 2, 1, 2, 3  # Retro g mode
 #    m, k, s, q = 2, 0, 1, 3  # Retro g mode
 #    m, k, s, q = -2, 1, 0, 3  # Pro Yanai
@@ -186,16 +186,19 @@ if __name__ == "__main__":
 #    m, k, s, q = -2, 0, -1, 3  # Kelvin check - this should use different functions!
 #    m, k, s, q = -2, 0, -1, 10  # LeeSaio1997 check - these do not require new functions ?
 
-    ecc = 0.15
-    chi = 0.3
+    ecc = 0.
+    chi = 0.
 
-#    make_houghs(m, k, s, q, ecc, chi)
+    make_houghs(m, k, s, q, ecc, chi)
 
     mlist = [-2, 2, -2, 2, -2, 2, 2, 2]
     klist = [2, 2, 1, 1, 0, 0, -1, -2]
     slist = [1, 3, 0, 2, -1, 1, 0, 1]
     qlist = [3, 3, 3, 3, 3, 3, 6, 15]
+    ecc, chi = 0.15, 0.3
 
     for m, k, s, q in zip(mlist, klist, slist, qlist):
         make_houghs(m, k, s, q, ecc, chi)
+
+
 

@@ -163,19 +163,19 @@ def main():
     qlists = [qneg, qpos]
     kvals = [0, 1, 2]  # l=2,3,4
 
-#    rootfind_any(m, 2, np.linspace(-10., -0.5, 170), inc=1.0075)
-#    rootfind_any(m, 1, np.linspace(-10., -0.5, 170), inc=1.05)
-#    rootfind_any(m, 0, np.linspace(-10., -0.5, 170), inc=1.05)
-#    rootfind_any(m, 2, np.linspace(10., 0.5, 170), inc=1.0075)
-#    rootfind_any(m, 1, np.linspace(10., 0.5, 170), inc=1.05)
-#    rootfind_any(m, 0, np.linspace(10., 0.5, 170), inc=1.05)
-#    rootfind_any(m, -1, np.linspace(-10., -3.2, 100), inc=1.05)
-#    rootfind_any(m, -2, np.linspace(-10., -6.1, 50), inc=1.05)
-#    plt.yscale('log')
-#    plt.show()
+    rootfind_any(m, 2, np.linspace(-10., -0.5, 170), inc=1.0075)
+    rootfind_any(m, 1, np.linspace(-10., -0.5, 170), inc=1.05)
+    rootfind_any(m, 0, np.linspace(-10., -0.5, 170), inc=1.05)
+    rootfind_any(m, 2, np.linspace(10., 0.5, 170), inc=1.0075)
+    rootfind_any(m, 1, np.linspace(10., 0.5, 170), inc=1.05)
+    rootfind_any(m, 0, np.linspace(10., 0.5, 170), inc=1.05)
+    rootfind_any(m, -1, np.linspace(-10., -3.2, 100), inc=1.05)
+    rootfind_any(m, -2, np.linspace(-10., -6.1, 50), inc=1.05)
+    plt.yscale('log')
+    plt.show()
 
-    chi = 0.27
-    dlngrav=partial(grav.chi_gravity_deriv, chi)
+#    chi = 0.27
+#    dlngrav=partial(grav.chi_gravity_deriv, chi)
 #    r_eq, mass, period = 1e4, 1.4*1.9885e30, 1./361
 #    morsink=partial(grav.AM14_gravity_deriv, r_eq, mass, period)  # Can use physical parameters this way
 #    rootfind_dimless(m, 2, np.linspace(-9, -0.5, 170), ecc=.15, dlngrav=dlngrav, inc=1.0075)
@@ -184,11 +184,11 @@ def main():
 #    plt.yscale('log')
 #    plt.show()
 
-    rootfind_dimless(m, -2, np.linspace(-175, -10.5, 220), ecc=.12, dlngrav=dlngrav, inc=1.075)
-    rootfind_dimless(m, -2, np.linspace(-175, -10.5, 220), ecc=.12, inc=1.075)
-    rootfind_dimless(m, -2, np.linspace(-175, -10.5, 220), inc=1.075)
-    plt.yscale('log')
-    plt.show()
+#    rootfind_dimless(m, -2, np.linspace(-175, -10.5, 220), ecc=.12, dlngrav=dlngrav, inc=1.075)
+#    rootfind_dimless(m, -2, np.linspace(-175, -10.5, 220), ecc=.12, inc=1.075)
+#    rootfind_dimless(m, -2, np.linspace(-175, -10.5, 220), inc=1.075)
+#    plt.yscale('log')
+#    plt.show()
 
 #    rootfind_dimless(m, -2, np.linspace(-25., -10, 80), ecc=.02, inc=1.025)
 #    rootfind_dimless(m, -2, np.linspace(-25., -10, 80), ecc=.02, inc=1.025)

@@ -83,10 +83,10 @@ def rootfind_any(m, k, qlist, r_eq=1e4, mass=1.4*1.9885e30, period=np.inf, verbo
     is_even = mode_admin.is_even()
     l = mode_admin.get_l()
 
-    if np.average(qlist) < 0:
-        direction = "retro"
-    else:
+    if np.average(qlist)*m < 0:
         direction = "pro"
+    else:
+        direction = "retro"
 
     wavemode = mode_admin.get_wavemode(direction)
     print is_even, l, wavemode
@@ -116,10 +116,10 @@ def rootfind_dimless(m, k, qlist, ecc=0., dlngrav=partial(grav.chi_gravity_deriv
     is_even = mode_admin.is_even()
     l = mode_admin.get_l()
 
-    if np.average(qlist) < 0:
-        direction = "retro"
-    else:
+    if np.average(qlist)*m < 0:
         direction = "pro"
+    else:
+        direction = "retro"
 
     wavemode = mode_admin.get_wavemode(direction)
     print is_even, l, wavemode

@@ -19,6 +19,7 @@ import helpers.Straddle as Straddle
 import helpers.rootfinder as roots
 import helpers.plotting as plotting
 import helpers.LaPlace_asymptotes as asym
+import helpers.Curvilinear_asymptotes as curvasym
 import helpers.sanity_plots as sanplot
 import helpers.morsink_radius as oblate
 import helpers.gravity_functions as grav
@@ -77,6 +78,40 @@ def multi_eccentricity_rootfind(m, k, qlist, is_even, r_eq, mass, periodlist):
                 m, k, mass/1.9885e30, r_eq*1e-3))
     plt.yscale('log')
     plt.show()
+
+
+def rootfind_dimless(m, k, qlist, ecc=0., chi=0., gravfunc=grav.chi_gravity_deriv, verbose=False, inc=1.0033):
+    """
+    For a given m, k and qlist, and potentially for different radius, mass and
+    period as well, determines the wave mode and calculates the eigenvalues
+    from the asymptotically calculated values.
+    """
+    dlngrav=partial(gravfunc, chi)
+    mode_admin = Property.Mode_admin(m, k)
+    mode_admin.validate_values()
+    is_even = mode_admin.is_even()
+    l = mode_admin.get_l()
+
+    if np.average(qlist)*m < 0:
+        direction = "pro"
+    else:
+        direction = "retro"
+
+    wavemode = mode_admin.get_wavemode(direction)
+    print is_even, l, wavemode
+
+    wavemode += "s"
+    if wavemode[0] == "g":
+        wavemode += "_list"
+    wavemode = wavemode.replace(" ", "_")
+    if wavemode[0] == "y" or wavemode[0] == "k":  # yanai and kelvin modes only have two arguments
+        args = m, qlist, ecc, chi
+    else:
+        args = m, k, qlist, ecc, chi
+    guesslist = getattr(curvasym, wavemode)(*args)
+
+    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=False, inc=inc)
+    plt.plot(qlist, found_lamlist)
 
 
 def simple_numasyplot(m):
@@ -148,6 +183,60 @@ def compare_newfile(m):
     plt.xlabel(r"Spin parameter q = $2\Omega/\omega$")
     plt.ylabel(r"Eigenvalue $\lambda$")
     plt.legend(fontsize=24, frameon=True, fancybox=True, edgecolor="#000000")
+    plt.show()
+
+
+def compare_curvasym(m):
+    qneg = np.linspace(-1, -10, 9.5e2+4)
+    qpos = np.linspace(1, 10, 9.5e2+4)
+    for ecc in [0, .05, .1]:
+        if ecc == .05:
+            ls="dotted"
+        elif ecc == .1:
+            ls="dashed"
+        else:
+            ls="solid"
+        chi = ecc*2
+        pro1 = curvasym.g_modes_list(m, 2, qpos, ecc=ecc, chi=chi)
+        pro2 = curvasym.yanai_modes(m, qpos, ecc=ecc, chi=chi)
+        gpr2 = curvasym.g_modes_list(m, 1, qpos, ecc=ecc, chi=chi)
+        pro3 = curvasym.kelvin_modes(m, qpos, ecc=ecc, chi=chi)
+        ret1 = curvasym.g_modes_list(m, 2, qneg, ecc=ecc, chi=chi)
+        ret2 = curvasym.g_modes_list(m, 1, qneg, ecc=ecc, chi=chi)
+        ret3 = curvasym.g_modes_list(m, 0, qneg, ecc=ecc, chi=chi)
+        ret4 = curvasym.yanai_modes(m, qneg, ecc=ecc, chi=chi)
+        gre4 = curvasym.g_modes_list(m, -1, qneg, ecc=ecc, chi=chi)
+        plt.plot(qpos, pro1, ls=ls)
+        plt.plot(qpos, pro2, ls=ls)
+        plt.plot(qpos, gpr2, ls=ls, color="black")
+        plt.plot(qpos, pro3, ls=ls)
+        plt.plot(qneg, ret1, ls=ls)
+        plt.plot(qneg, ret2, ls=ls)
+        plt.plot(qneg, ret3, ls=ls)
+        plt.plot(qneg, ret4, ls=ls)
+        plt.plot(qneg, gre4, ls=ls, color="black")
+    plt.xlim([-10, 10])
+    plt.ylim([3.8, 5500])
+    plt.xlabel(r"Spin parameter q = $2\Omega/\omega$")
+    plt.ylabel(r"Eigenvalue $\lambda$")
+    plt.yscale('log')
+    plt.legend(fontsize=16, frameon=True, fancybox=True, edgecolor="#000000")
+    plt.show()
+
+
+def compare_curvrmode(m):
+    qneg = np.linspace(-50, -6.5, 9.5e2+4)
+    rspheric = curvasym.r_modes(m, -2, qneg, ecc=0, chi=0)
+    rcurv1 = curvasym.r_modes(m, -2, qneg, ecc=.05, chi=.1)
+    rcurv2 = curvasym.r_modes(m, -2, qneg, ecc=.1, chi=.2)
+    qnum = np.linspace(-50, -9.5, 250)
+#    rootfind_dimless(m, -2, qnum, ecc=0., dlngrav=partial(grav.chi_gravity_deriv, 0.), verbose=False, inc=1.05)
+#    rootfind_dimless(m, -2, qnum, ecc=0.05, dlngrav=partial(grav.chi_gravity_deriv, 0.1), verbose=False, inc=1.05)
+#    rootfind_dimless(m, -2, qnum, ecc=0.1, dlngrav=partial(grav.chi_gravity_deriv, 0.2), verbose=False, inc=1.05)
+    plt.plot(qneg, rspheric, ls='solid', color="black")
+    plt.plot(qneg, rcurv1, ls='dotted', color="black")
+    plt.plot(qneg, rcurv2, ls='dashed', color="black")
+    plt.yscale('log')
     plt.show()
 
 
@@ -339,19 +428,20 @@ def main():
 #    fullrange_multi_rootfind(m, qlists, kvals, aympcompare=True)  # Mostly for plotting functionality
 #    fullrange_multi_rootfind(m, [qneg], [2], aympcompare=True)  # Testing just for k=-1, negative part
 
-    for ecc in [.0, .05, .1]:
-        dlngrav=partial(grav.chi_gravity_deriv, ecc*2)
-        rootfind_dimless(m, 2, np.linspace(-10., -1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.0075)
-        rootfind_dimless(m, 1, np.linspace(-10., -1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.05)
-        rootfind_dimless(m, 0, np.linspace(-10., -1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.05)
-        rootfind_dimless(m, 2, np.linspace(10., 1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.0075)
-        rootfind_dimless(m, 1, np.linspace(10., 1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.05)
-        rootfind_dimless(m, 0, np.linspace(10., 1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.05)
-        rootfind_dimless(m, -1, np.linspace(-10., -3.25, 100), ecc=ecc, dlngrav=dlngrav, inc=1.05)
-#        rootfind_dimless(m, -2, np.linspace(-10., -6.1, 50), ecc=ecc, dlngrav=dlngrav, inc=1.05)
-    plt.yscale('log')
-    plt.show()
-
+#    for ecc in [.0, .05, .1]:
+#        dlngrav=partial(grav.chi_gravity_deriv, ecc*2)
+#        rootfind_dimless(m, 2, np.linspace(-10., -1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.0075)
+#        rootfind_dimless(m, 1, np.linspace(-10., -1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.05)
+#        rootfind_dimless(m, 0, np.linspace(-10., -1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.05)
+#        rootfind_dimless(m, 2, np.linspace(10., 1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.0075)
+#        rootfind_dimless(m, 1, np.linspace(10., 1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.05)
+#        rootfind_dimless(m, 0, np.linspace(10., 1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.05)
+#        rootfind_dimless(m, -1, np.linspace(-10., -3.25, 100), ecc=ecc, dlngrav=dlngrav, inc=1.05)
+##        rootfind_dimless(m, -2, np.linspace(-10., -6.1, 50), ecc=ecc, dlngrav=dlngrav, inc=1.05)
+#    plt.yscale('log')
+#    plt.show()
+    compare_curvasym(m)
+    compare_curvrmode(m)
 
 
     r_eq, mass, period = 1.2e4, 1.6*1.9885e30, 1./581

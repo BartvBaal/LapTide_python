@@ -123,8 +123,8 @@ def run_ode(cur, obs):
     # stepper = 'dopri5'
     stepper = 'dop853'
     atol = 0.
-    rtol = 1./(2**48)  # 1./(2**30)
-    nsteps = 9600  # 2000
+    rtol = 1./(2**34)  # 1./(2**30), 1./(2**48)
+    nsteps = 9600  # 2000, 9600
     y0 = cur.init_y()
     solver = ode(cur)
     solver.set_integrator(stepper, atol=atol, rtol=rtol, nsteps=nsteps)

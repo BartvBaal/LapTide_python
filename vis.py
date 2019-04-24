@@ -3,6 +3,7 @@
 import sys
 import numpy as np
 import itertools
+from functools import partial
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -20,6 +21,7 @@ import helpers.plotting as plotting
 import helpers.LaPlace_asymptotes as asym
 import helpers.sanity_plots as sanplot
 import helpers.morsink_radius as oblate
+import helpers.gravity_functions as grav
 
 # Changing plotting parameters to bigger values for readable large plots
 import matplotlib as mpl
@@ -270,6 +272,45 @@ def compare_dimless(period=1./581, sn="4U 1636-536", r_cmap="inferno", m_cmap="v
     plt.show()
 
 
+def rootfind_dimless(m, k, qlist, ecc=0., dlngrav=partial(grav.chi_gravity_deriv, 0.), verbose=False, inc=1.0033):
+    """
+    For a given m, k and qlist, and potentially for different radius, mass and
+    period as well, determines the wave mode and calculates the eigenvalues
+    from the asymptotically calculated values.
+    """
+    mode_admin = Property.Mode_admin(m, k)
+    mode_admin.validate_values()
+    is_even = mode_admin.is_even()
+    l = mode_admin.get_l()
+
+    if np.average(qlist) < 0:
+        direction = "retro"
+    else:
+        direction = "pro"
+
+    wavemode = mode_admin.get_wavemode(direction)
+    print is_even, l, wavemode
+
+    wavemode += "s"
+    if wavemode[0] == "g":
+        wavemode += "_list"
+    wavemode = wavemode.replace(" ", "_")
+    if wavemode[0] == "y" or wavemode[0] == "k":  # yanai and kelvin modes only have two arguments
+        args = m, qlist
+    else:
+        args = m, k, qlist
+    guesslist = getattr(asym, wavemode)(*args)
+
+    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=False, inc=inc)
+    if ecc == .05:
+        ls="dotted"
+    elif ecc == .1:
+        ls="dashed"
+    else:
+        ls="solid"
+    plt.plot(qlist, found_lamlist, ls=ls)
+
+
 def main():
     # Need to consider if I want the inputs as m, l or m, k - using k for now
     if len(sys.argv) != 3:
@@ -298,6 +339,21 @@ def main():
 #    fullrange_multi_rootfind(m, qlists, kvals, aympcompare=True)  # Mostly for plotting functionality
 #    fullrange_multi_rootfind(m, [qneg], [2], aympcompare=True)  # Testing just for k=-1, negative part
 
+    for ecc in [.0, .05, .1]:
+        dlngrav=partial(grav.chi_gravity_deriv, ecc*2)
+        rootfind_dimless(m, 2, np.linspace(-10., -1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.0075)
+        rootfind_dimless(m, 1, np.linspace(-10., -1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.05)
+        rootfind_dimless(m, 0, np.linspace(-10., -1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.05)
+        rootfind_dimless(m, 2, np.linspace(10., 1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.0075)
+        rootfind_dimless(m, 1, np.linspace(10., 1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.05)
+        rootfind_dimless(m, 0, np.linspace(10., 1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.05)
+        rootfind_dimless(m, -1, np.linspace(-10., -3.25, 100), ecc=ecc, dlngrav=dlngrav, inc=1.05)
+#        rootfind_dimless(m, -2, np.linspace(-10., -6.1, 50), ecc=ecc, dlngrav=dlngrav, inc=1.05)
+    plt.yscale('log')
+    plt.show()
+
+
+
     r_eq, mass, period = 1.2e4, 1.6*1.9885e30, 1./581
     x, om_bar_sq = oblate.find_x_ombarsq(r_eq, mass, period)
     r_polar = r_eq*oblate.calc_radius_14_dimless(x, om_bar_sq, 0.)
@@ -308,8 +364,8 @@ def main():
     print "sigma: {}, Gamma: {}, ecc: {}".format(sigma, Gamma, ecc)
 
 #    plotting.asymptotic_plotting(m)
-    plotting.curvi_asymptotic_plotting(m, sigma, Gamma, ecc)
-    plt.show()
+#    plotting.curvi_asymptotic_plotting(m, sigma, Gamma, ecc)
+#    plt.show()
 #    simple_numasyplot_rmodesINC(m, k, is_even)
 #    r_eq, mass = 1e4, 1.4*1.9885e30
 #    for period in [np.inf, 1./100, 1./363, 1./581]:

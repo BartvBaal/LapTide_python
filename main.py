@@ -163,14 +163,14 @@ def main():
     qlists = [qneg, qpos]
     kvals = [0, 1, 2]  # l=2,3,4
 
-    rootfind_any(m, 2, np.linspace(-10., -0.5, 170), inc=1.0075)
-    rootfind_any(m, 1, np.linspace(-10., -0.5, 170), inc=1.05)
-    rootfind_any(m, 0, np.linspace(-10., -0.5, 170), inc=1.05)
-    rootfind_any(m, 2, np.linspace(10., 0.5, 170), inc=1.0075)
-    rootfind_any(m, 1, np.linspace(10., 0.5, 170), inc=1.05)
-    rootfind_any(m, 0, np.linspace(10., 0.5, 170), inc=1.05)
-    rootfind_any(m, -1, np.linspace(-10., -3.2, 100), inc=1.05)
-    rootfind_any(m, -2, np.linspace(-10., -6.1, 50), inc=1.05)
+    rootfind_dimless(m, 2, np.linspace(-10., -0.5, 170), inc=1.0075)
+    rootfind_dimless(m, 1, np.linspace(-10., -0.5, 170), inc=1.05)
+    rootfind_dimless(m, 0, np.linspace(-10., -0.5, 170), inc=1.05)
+    rootfind_dimless(m, 2, np.linspace(10., 0.5, 170), inc=1.0075)
+    rootfind_dimless(m, 1, np.linspace(10., 0.5, 170), inc=1.05)
+    rootfind_dimless(m, 0, np.linspace(10., 0.5, 170), inc=1.05)
+    rootfind_dimless(m, -1, np.linspace(-10., -3.2, 100), inc=1.05)
+    rootfind_dimless(m, -2, np.linspace(-10., -6.1, 50), inc=1.05)
     plt.yscale('log')
     plt.show()
 

@@ -23,6 +23,7 @@ import helpers.Curvilinear_asymptotes as curvasym
 import helpers.sanity_plots as sanplot
 import helpers.morsink_radius as oblate
 import helpers.gravity_functions as grav
+import helpers.gridplotter as gridplot
 
 # Changing plotting parameters to bigger values for readable large plots
 import matplotlib as mpl
@@ -80,7 +81,7 @@ def multi_eccentricity_rootfind(m, k, qlist, is_even, r_eq, mass, periodlist):
     plt.show()
 
 
-def rootfind_dimless(m, k, qlist, ecc=0., chi=0., gravfunc=grav.chi_gravity_deriv, verbose=False, inc=1.0033):
+def rootfind_dimless_alt(m, k, qlist, ecc=0., chi=0., gravfunc=grav.chi_gravity_deriv, verbose=False, inc=1.0033):
     """
     For a given m, k and qlist, and potentially for different radius, mass and
     period as well, determines the wave mode and calculates the eigenvalues
@@ -111,7 +112,13 @@ def rootfind_dimless(m, k, qlist, ecc=0., chi=0., gravfunc=grav.chi_gravity_deri
     guesslist = getattr(curvasym, wavemode)(*args)
 
     qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=False, inc=inc)
-    plt.plot(qlist, found_lamlist)
+    if ecc == .05:
+        ls="dotted"
+    elif ecc == .1:
+        ls="dashed"
+    else:
+        ls="solid"
+    plt.plot(qlist, found_lamlist, ls=ls)
 
 
 def simple_numasyplot(m):
@@ -224,15 +231,42 @@ def compare_curvasym(m):
     plt.show()
 
 
+def curvasymplot_analytical(m, ecc=0., chi=0.):
+    qneg = np.linspace(-1.25, -10, 9.5e2+4)
+    qpos = np.linspace(1.25, 10, 9.5e2+4)
+    pro1 = curvasym.g_modes_list(m, 2, qpos, ecc=ecc, chi=chi)
+    pro2 = curvasym.g_modes_list(m, 1, qpos, ecc=ecc, chi=chi)
+    pro3 = curvasym.kelvin_modes(m, qpos, ecc=ecc, chi=chi)
+    ret1 = curvasym.g_modes_list(m, 2, qneg, ecc=ecc, chi=chi)
+    ret2 = curvasym.g_modes_list(m, 1, qneg, ecc=ecc, chi=chi)
+    ret3 = curvasym.g_modes_list(m, 0, qneg, ecc=ecc, chi=chi)
+    ret4 = curvasym.g_modes_list(m, -1, qneg, ecc=ecc, chi=chi)
+    ret5 = curvasym.r_modes(m, -2, np.linspace(-10., -6.1, 85), ecc=0, chi=0)
+    plt.xlim([-10,10])
+    plt.ylim([.1, 6250])
+    plt.plot(qneg, ret1, c="orange")
+    plt.plot(qneg, ret2, c="red")
+    plt.plot(qneg, ret3, c="blue")
+    plt.plot(qneg, ret4, c="fuchsia")
+    plt.plot(np.linspace(-10., -6.1, 85), ret5, c="brown")
+    plt.plot(qpos, pro1, c="purple")
+    plt.plot(qpos, pro2, c="green")
+    plt.plot(qpos, pro3, c="cyan")
+    plt.yscale('log')
+    plt.xlabel(r"Spin parameter q = $2\Omega/\omega$")
+    plt.ylabel(r"Eigenvalue $\lambda$")
+    plt.show()
+
+
 def compare_curvrmode(m):
     qneg = np.linspace(-50, -6.5, 9.5e2+4)
     rspheric = curvasym.r_modes(m, -2, qneg, ecc=0, chi=0)
     rcurv1 = curvasym.r_modes(m, -2, qneg, ecc=.05, chi=.1)
     rcurv2 = curvasym.r_modes(m, -2, qneg, ecc=.1, chi=.2)
     qnum = np.linspace(-50, -9.5, 250)
-#    rootfind_dimless(m, -2, qnum, ecc=0., dlngrav=partial(grav.chi_gravity_deriv, 0.), verbose=False, inc=1.05)
-#    rootfind_dimless(m, -2, qnum, ecc=0.05, dlngrav=partial(grav.chi_gravity_deriv, 0.1), verbose=False, inc=1.05)
-#    rootfind_dimless(m, -2, qnum, ecc=0.1, dlngrav=partial(grav.chi_gravity_deriv, 0.2), verbose=False, inc=1.05)
+#    rootfind_dimless_alt(m, -2, qnum, ecc=0., chi=0, inc=1.05)
+#    rootfind_dimless_alt(m, -2, qnum, ecc=0.05, chi=0.1, inc=1.05)
+#    rootfind_dimless_alt(m, -2, qnum, ecc=0.1, chi=0.2, inc=1.05)
     plt.plot(qneg, rspheric, ls='solid', color="black")
     plt.plot(qneg, rcurv1, ls='dotted', color="black")
     plt.plot(qneg, rcurv2, ls='dashed', color="black")
@@ -429,29 +463,67 @@ def main():
 #    fullrange_multi_rootfind(m, [qneg], [2], aympcompare=True)  # Testing just for k=-1, negative part
 
 #    for ecc in [.0, .05, .1]:
-#        dlngrav=partial(grav.chi_gravity_deriv, ecc*2)
-#        rootfind_dimless(m, 2, np.linspace(-10., -1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.0075)
-#        rootfind_dimless(m, 1, np.linspace(-10., -1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.05)
-#        rootfind_dimless(m, 0, np.linspace(-10., -1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.05)
-#        rootfind_dimless(m, 2, np.linspace(10., 1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.0075)
-#        rootfind_dimless(m, 1, np.linspace(10., 1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.05)
-#        rootfind_dimless(m, 0, np.linspace(10., 1.25, 170), ecc=ecc, dlngrav=dlngrav, inc=1.05)
-#        rootfind_dimless(m, -1, np.linspace(-10., -3.25, 100), ecc=ecc, dlngrav=dlngrav, inc=1.05)
-##        rootfind_dimless(m, -2, np.linspace(-10., -6.1, 50), ecc=ecc, dlngrav=dlngrav, inc=1.05)
+#        chi = ecc*2
+#        rootfind_dimless_alt(m, 2, np.linspace(-10., -1.5, 85), ecc=ecc, chi=chi, inc=1.0025)
+#        rootfind_dimless_alt(m, 1, np.linspace(-10., -1.5, 85), ecc=ecc, chi=chi, inc=1.0075)
+#        rootfind_dimless_alt(m, 0, np.linspace(-10., -1.5, 85), ecc=ecc, chi=chi, inc=1.0075)
+#        rootfind_dimless_alt(m, 2, np.linspace(10., 1.5, 85), ecc=ecc, chi=chi, inc=1.0075)
+#        rootfind_dimless_alt(m, 1, np.linspace(10., 1.5, 85), ecc=ecc, chi=chi, inc=1.0075)
+#        rootfind_dimless_alt(m, 0, np.linspace(10., 1.5, 85), ecc=ecc, chi=chi, inc=1.0075)
+#        rootfind_dimless_alt(m, -1, np.linspace(-10., -3.25, 50), ecc=ecc, chi=chi, inc=1.0075)
+#        rootfind_dimless_alt(m, -2, np.linspace(-10., -8.5, 25), ecc=ecc, chi=chi, inc=1.05)
 #    plt.yscale('log')
 #    plt.show()
-    compare_curvasym(m)
-    compare_curvrmode(m)
+
+    qmin, qmax, size = 1.5, 4., 35
+    ecc, chi = 0.0, 0.0
+    dlngrav = partial(grav.chi_gravity_deriv, chi)
+    qlist = np.linspace(qmin, qmax, 200)
+#    asymcompare = [qlist, curvasym.g_modes_list(m, 2, qlist, ecc=ecc, chi=chi)]
+
+    filestring = "data/gridplot/qrange_{}_{}_steps_{}_kval_{}_ecc_{}_chi_{}.txt".format(qmin, qmax, size, k, ecc, chi)
+    titlestr = r"Evaluation in grid of $\lambda$ and q, for m: {}, k: {}, ecc: {}, $\chi$: {}".format(m, k, ecc, chi)
+
+    all_data = gridplot.create_grid(m, k, size, qmin, qmax, ecc, chi, dlngrav, False)
+#    all_data = gridplot.load_grid(filestring)
+    gridplot.plot_grid(all_data, title=titlestr, interpolation="spline36")  #, asymcompare=asymcompare
+
+#    qmin, qmax, lammin, lammax, size = -10., -1.5, 3., 6., 125
+#    ecc, chi = 0.0, 0.0
+#    dlngrav = partial(grav.chi_gravity_deriv, chi)
+
+#    if is_even:
+#        evenstr="Even"
+#    else:
+#        evenstr="Odd"
+#    filestring = "data/lamgrid/qrange_{}_{}_lamrange_{}_{}_steps_{}_ecc_{}_chi_{}_{}.txt".format(qmin, qmax, lammin, lammax, size, ecc, chi, evenstr)
+
+#    titlestr = r"Evaluation of grid of $\lambda$ and q, for {} modes".format(evenstr)
+#    lamdata = gridplot.lambda_grid(m, k, size, qmin, qmax, lammin, lammax, ecc, chi, dlngrav, saving=False)
+##    lamdata = gridplot.load_grid(filestring)
+#    gridplot.plot_grid(lamdata, title=titlestr, interpolation="spline36", logscale=False)
 
 
-    r_eq, mass, period = 1.2e4, 1.6*1.9885e30, 1./581
-    x, om_bar_sq = oblate.find_x_ombarsq(r_eq, mass, period)
-    r_polar = r_eq*oblate.calc_radius_14_dimless(x, om_bar_sq, 0.)
-    eps = 1 - (r_polar / r_eq)
-    ecc = 1 - (r_polar / r_eq)**2
-    sigma = (r_polar / r_eq)**2
-    Gamma = (2*om_bar_sq + 4*eps) / (1-om_bar_sq)
-    print "sigma: {}, Gamma: {}, ecc: {}".format(sigma, Gamma, ecc)
+#    compare_curvasym(m)
+#    compare_curvrmode(m)
+
+#    ecc = 0.1
+#    chi = ecc*2.
+#    plotting.curvi_plotting(ecc="ecc_{}".format(ecc), chi="chi_{}".format(chi))
+#    plt.title(r"Numerics (dashed) and Analytics (solids) for ecc: {} and $\chi$: {}".format(ecc, chi))
+#    curvasymplot_analytical(m, ecc=ecc, chi=chi)
+
+
+#    r_eq, mass, period = 1.2e4, 1.6*1.9885e30, 1./581
+#    x, om_bar_sq = oblate.find_x_ombarsq(r_eq, mass, period)
+#    r_polar = r_eq*oblate.calc_radius_14_dimless(x, om_bar_sq, 0.)
+#    eps = 1 - (r_polar / r_eq)
+#    ecc = 1 - (r_polar / r_eq)**2
+#    sigma = (r_polar / r_eq)**2
+#    Gamma = (2*om_bar_sq + 4*eps) / (1-om_bar_sq)
+#    print "sigma: {}, Gamma: {}, ecc: {}".format(sigma, Gamma, ecc)
+
+
 
 #    plotting.asymptotic_plotting(m)
 #    plotting.curvi_asymptotic_plotting(m, sigma, Gamma, ecc)

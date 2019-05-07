@@ -175,15 +175,56 @@ def make_houghs(m, k, s, q, ecc, chi):
     plt.show()
 
 
+def eccentricity_compare(m, k, s, q, ecclist, chilist):
+    if len(ecclist) != len(chilist):
+        raise ValueError("Warning: ecclist and chilist should be the same length!")
+    N = 125
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(3, 1, 1)
+    ax2 = fig.add_subplot(3, 1, 2)
+    ax3 = fig.add_subplot(3, 1, 3)
+    ax1.set_xlim([0, 1])
+    ax2.set_xlim([0, 1])
+    ax3.set_xlim([0, 1])
+    ax1.set_ylabel(r"$\Theta(\sigma)$")
+    ax2.set_ylabel(r"$\hat\Theta(\sigma)$")
+    ax3.set_ylabel(r"$\tilde\Theta(\sigma)$")
+    ax3.set_xlabel(r"$\mu \equiv \cos(\theta)$")
+
+    for ecc, chi in zip(ecclist, chilist):
+        dlngrav = partial(grav.chi_gravity_deriv, chi)
+        guess, lam, wavename, direc = rootfind_dimless(m, k, np.asarray([q]), ecc, dlngrav, verbose=False, inc=1.075)
+        mu = np.linspace(1., 0., N)
+        sigma = np.sqrt(1-(ecc*(1-mu**2)))
+
+        # Numeric values
+        is_even = Curvilinear.check_is_even(m, k)
+        num_hough, num_houghHat = numerics(Curvilinear, [m, q, ecc, dlngrav], lam, is_even, N)
+        num_houghTilde = -m * num_hough - q*mu/sigma * num_houghHat
+
+        ax1.set_title("m: {}, k: {}, s: {}, q: {}  ({}grade {})".format(m, k, s, q, direc, wavename))
+        ax1.plot(mu, num_hough, label=r"ecc: {}, $\chi$: {}".format(ecc, chi))
+        ax2.plot(mu, num_houghHat)
+        ax3.plot(mu, num_houghTilde)
+
+    ax1.tick_params(axis='y', which='both', left='on', right='on')
+    ax2.tick_params(axis='y', which='both', left='on', right='on')
+    ax3.tick_params(axis='y', which='both', left='on', right='on')
+    ax1.legend()
+    plt.show()
+
+
+
 if __name__ == "__main__":
 #    m, k, s, q = -2, 2, 1, 3  # Pro g mode
-    m, k, s, q = 2, 2, 3, 2.3  # Retro g mode
+#    m, k, s, q = 2, 2, 3, 3  # Retro g mode
 #    m, k, s, q = 2, 1, 2, 3  # Retro g mode
 #    m, k, s, q = 2, 0, 1, 3  # Retro g mode
 #    m, k, s, q = -2, 1, 0, 3  # Pro Yanai
 #    m, k, s, q = 2, -1, 0, 6  # Retro Yanai
 #    m, k, s, q = 2, -2, 1, 12.5  # Retro r mode
-#    m, k, s, q = -2, 0, -1, 3  # Kelvin check - this should use different functions!
+    m, k, s, q = -2, 0, -1, 3  # Kelvin check - this should use different functions!
 #    m, k, s, q = -2, 0, -1, 10  # LeeSaio1997 check - these do not require new functions ?
 
     ecc = 0.
@@ -191,11 +232,16 @@ if __name__ == "__main__":
 
     make_houghs(m, k, s, q, ecc, chi)
 
+    ecclist = [0., 0.05, .1, .15]
+    chilist = [0., .1, .2, .3]
+    eccentricity_compare(m, k, s, q, ecclist, chilist)
+
+    # To reproduce the Townsend plots 
     mlist = [-2, 2, -2, 2, -2, 2, 2, 2]
     klist = [2, 2, 1, 1, 0, 0, -1, -2]
     slist = [1, 3, 0, 2, -1, 1, 0, 1]
     qlist = [3, 3, 3, 3, 3, 3, 6, 15]
-    ecc, chi = 0.15, 0.3
+    ecc, chi = 0., 0.
 
     for m, k, s, q in zip(mlist, klist, slist, qlist):
         make_houghs(m, k, s, q, ecc, chi)

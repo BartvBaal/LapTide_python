@@ -17,6 +17,7 @@ import helpers.plotting as plotting
 import helpers.sanity_plots as sanplot
 import helpers.morsink_radius as oblate
 import helpers.LaPlace_asymptotes as asym
+import helpers.Curvilinear_asymptotes as curvasym
 import helpers.gravity_functions as grav
 
 
@@ -138,6 +139,51 @@ def rootfind_dimless(m, k, qlist, ecc=0., dlngrav=partial(grav.chi_gravity_deriv
     plt.plot(qlist, found_lamlist)
 
 
+def rootfind_dimless_alt(m, k, qlist, ecc=0., chi=0., gravfunc=grav.chi_gravity_deriv, verbose=False, inc=1.0033, saving=False):
+    """
+    For a given m, k and qlist, and potentially for different radius, mass and
+    period as well, determines the wave mode and calculates the eigenvalues
+    from the asymptotically calculated values.
+    """
+    dlngrav=partial(gravfunc, chi)
+    mode_admin = Property.Mode_admin(m, k)
+    mode_admin.validate_values()
+    is_even = mode_admin.is_even()
+    l = mode_admin.get_l()
+
+    if np.average(qlist)*m < 0:
+        direction = "pro"
+    else:
+        direction = "retro"
+
+    wavemode = mode_admin.get_wavemode(direction)
+    print is_even, l, wavemode
+
+    wavemode += "s"
+    if wavemode[0] == "g":
+        wavemode += "_list"
+    wavemode = wavemode.replace(" ", "_")
+    if wavemode[0] == "y" or wavemode[0] == "k":  # yanai and kelvin modes only have two arguments
+        args = m, qlist, ecc, chi
+    else:
+        args = m, k, qlist, ecc, chi
+    guesslist = getattr(curvasym, wavemode)(*args)
+
+    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=verbose, inc=inc)
+    if saving:
+        savestring = "data/Curvilinear/range_{}_{}_steps_{}_kval_{}_ecc_{}_chi_{}.txt"\
+                                    .format(qlist[0],qlist[-1],len(qlist),str(k), str(ecc), str(chi))
+        print "\nSaving to: {}\n\n".format(savestring)
+        np.savetxt(savestring, found_lamlist)
+    if ecc == .05:
+        ls="dotted"
+    elif ecc == .1:
+        ls="dashed"
+    else:
+        ls="solid"
+    plt.plot(qlist, found_lamlist, ls=ls)
+
+
 def main():
     # Need to consider if I want the inputs as m, l or m, k - using k for now
     if len(sys.argv) != 3:
@@ -163,16 +209,24 @@ def main():
     qlists = [qneg, qpos]
     kvals = [0, 1, 2]  # l=2,3,4
 
-    rootfind_dimless(m, 2, np.linspace(-10., -0.5, 170), inc=1.0075)
-    rootfind_dimless(m, 1, np.linspace(-10., -0.5, 170), inc=1.05)
-    rootfind_dimless(m, 0, np.linspace(-10., -0.5, 170), inc=1.05)
-    rootfind_dimless(m, 2, np.linspace(10., 0.5, 170), inc=1.0075)
-    rootfind_dimless(m, 1, np.linspace(10., 0.5, 170), inc=1.05)
-    rootfind_dimless(m, 0, np.linspace(10., 0.5, 170), inc=1.05)
-    rootfind_dimless(m, -1, np.linspace(-10., -3.2, 100), inc=1.05)
-    rootfind_dimless(m, -2, np.linspace(-10., -6.1, 50), inc=1.05)
+    ecc, chi = 0.2, 0.4
+    saving=False
+    rootfind_dimless_alt(m, 2, np.linspace(-9.5, -1.25, 17), ecc=ecc, chi=chi, saving=saving, verbose=True)
+    rootfind_dimless_alt(m, 1, np.linspace(-10., -1.25, 17), ecc=ecc, chi=chi, saving=saving, verbose=True)
+    rootfind_dimless_alt(m, 0, np.linspace(-10., -1.25, 17), ecc=ecc, chi=chi, saving=saving, verbose=True)
+    rootfind_dimless_alt(m, 2, np.linspace(10., 1.25, 17), ecc=ecc, chi=chi, saving=saving, verbose=True)
+    rootfind_dimless_alt(m, 1, np.linspace(10., 1.25, 17), ecc=ecc, chi=chi, saving=saving, verbose=True)
+    rootfind_dimless_alt(m, 0, np.linspace(10., 1.25, 17), ecc=ecc, chi=chi, saving=saving, verbose=True)
+    rootfind_dimless_alt(m, -1, np.linspace(-10., -3.5, 10), ecc=ecc, chi=chi, saving=saving, verbose=True)
+    rootfind_dimless_alt(m, -2, np.linspace(-10., -8.25, 5), ecc=ecc, chi=chi, saving=saving, inc=1.05, verbose=True)
     plt.yscale('log')
     plt.show()
+
+#    for ecc in [0., 0.05, 0.1]:
+#        chi = ecc*2.
+#        rootfind_dimless_alt(m, 0, np.linspace(100, 1.25, 500), ecc=ecc, chi=chi)
+#    plt.yscale('log')
+#    plt.show()
 
 #    chi = 0.27
 #    dlngrav=partial(grav.chi_gravity_deriv, chi)

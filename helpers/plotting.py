@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -153,5 +154,13 @@ def townsend_plotting():
     "data/Townsend2003/range_0.0_-10.0_steps_951_kval_2.txt"]
     numerics_plotting(plotlist)
 
+
+def curvi_plotting(ecc="ecc_0.0", chi="chi_0.0"):
+    plotlist = []
+    allfiles = os.listdir("data/Curvilinear")
+    for filename in allfiles:
+        if ecc in filename and chi in filename:
+            plotlist.append("data/Curvilinear/"+filename)
+    numerics_plotting(plotlist)
 
 

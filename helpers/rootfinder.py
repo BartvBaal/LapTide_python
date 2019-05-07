@@ -180,7 +180,7 @@ def multi_rootfind_curvilinear(m, k, qlist, is_even, r_eq, mass, period):
 def multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=False, inc=1.0033):
     neg_allowed = True
     inc = inc
-    N_steps = 100
+    N_steps = 250
     found_lamlist = np.zeros(len(qlist))
     fn = Curvilinear.solver_t_dimless(m, qlist[0], is_even, ecc, dlngrav)
     straddle = Straddle.straddle_t(fn, inc, N_steps)

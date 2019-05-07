@@ -123,9 +123,10 @@ def run_ode(cur, obs):
     # stepper = 'dopri5'
     stepper = 'dop853'
     atol = 0.
-    rtol = 1./(2**34)  # 1./(2**30), 1./(2**48)
+    rtol = 2.**-32  # 1./(2**30), 1./(2**48)
     nsteps = 9600  # 2000, 9600
     y0 = cur.init_y()
+#    first_step = 2.**-30
     solver = ode(cur)
     solver.set_integrator(stepper, atol=atol, rtol=rtol, nsteps=nsteps)
     solver.set_solout(obs)
@@ -263,6 +264,11 @@ class solver_t_dimless:
         self.score = score_t(is_even)
         self.ecc = ecc
         self.dlngrav = dlngrav
+#        if self.m*self.q > 0:
+#            self.is_even_int = 1
+#        else:
+#            self.is_even_int = 0
+#        self.is_even_int = 0  # Should only be 0 for Kelvin modes?
 
     def set_m(self, m):
         self.m = m
@@ -277,7 +283,8 @@ class solver_t_dimless:
         cur = ODE_t_dimless(self.m, self.q, lam, self.ecc, self.dlngrav)
         obs = Observers.max_t()
         y1 = run_ode(cur, obs)
-        return self.score(y1 / obs.max_f)
+#        print y1, obs.max_f
+        return self.score(y1 / obs.max_f)  # TODO: find alternative for normalization!
 
     def __call__(self, lam):
         return self.shoot(lam)

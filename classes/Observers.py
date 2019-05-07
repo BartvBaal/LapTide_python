@@ -20,12 +20,15 @@ class save_t:
 
 class max_t:
     """Hold the max value of the ODE for normalisation"""
-    def __init__ (self, idx=0):
+    def __init__ (self):
         self.max_f = 0.
-        self.idx = idx
-    def __call__ (self, t, y):
-        if abs(y[self.idx]) > abs(self.max_f):
-            self.max_f = y[self.idx]
+    def __call__(self, t, y):
+        checkmax = abs(np.amax(np.fmax(*y)))
+        if checkmax > abs(self.max_f):
+            self.max_f = checkmax
+#    def __call__ (self, t, y):
+#        if abs(y[self.idx]) > abs(self.max_f):
+#            self.max_f = y[self.idx]
     
 class compose_t:
     """Collect a set of independent observers"""

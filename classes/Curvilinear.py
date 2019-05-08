@@ -264,11 +264,12 @@ class solver_t_dimless:
         self.score = score_t(is_even)
         self.ecc = ecc
         self.dlngrav = dlngrav
-#        if self.m*self.q > 0:
-#            self.is_even_int = 1
-#        else:
-#            self.is_even_int = 0
-#        self.is_even_int = 0  # Should only be 0 for Kelvin modes?
+        if self.m*self.q > 0:
+            self.is_prograde = False
+        else:
+            self.is_prograde = True
+        self.is_even_int = 1  # Should only be 0 for Kelvin modes?
+#        if self.m*self.q < 0 and ## Need more info to recognize wavemode
 
     def set_m(self, m):
         self.m = m
@@ -281,12 +282,15 @@ class solver_t_dimless:
 
     def shoot(self, lam):
         cur = ODE_t_dimless(self.m, self.q, lam, self.ecc, self.dlngrav)
-        obs = Observers.max_t()
+        obs = Observers.max_t(self.is_even_int)
         y1 = run_ode(cur, obs)
 #        print y1, obs.max_f
         return self.score(y1 / obs.max_f)  # TODO: find alternative for normalization!
 
     def __call__(self, lam):
+#        print self.m*self.m*.75 < lam < self.m*self.m*1.25
+        if self.m*self.m*.75 < lam < self.m*self.m*1.25 and self.is_prograde:
+            self.is_even_int = 0
         return self.shoot(lam)
 
     def save(self, lam):

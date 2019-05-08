@@ -39,6 +39,8 @@ def create_grid(m, k, size, qmin, qmax, ecc, chi, dlngrav, saving=False):
         args = m, k, qarr, ecc, chi
     guesslist = getattr(curvasym, wavemode)(*args)
     lamarr = np.linspace(min(guesslist)*.9, max(guesslist)*1.1, size)
+    if max(guesslist) < 1.:
+        lamarr = np.linspace(0.01, max(guesslist)*1.1, size)
 
     qdim = np.repeat(qarr, size)
     lamdim = np.tile(lamarr, size)
@@ -113,7 +115,7 @@ def plot_grid(all_data, asymcompare=None, title=None, interpolation=None, logsca
     print solns
 
     fig, ax = plt.subplots()
-    im = ax.imshow(solns, cmap="RdGy", extent=[qvals[0], qvals[-1], lamvals[0], lamvals[-1]], aspect="auto", origin="lower", norm=colors.SymLogNorm(linthresh=0.01, linscale=0.5), interpolation=interpolation)
+    im = ax.imshow(solns, cmap="RdGy", extent=[qvals[0], qvals[-1], lamvals[0], lamvals[-1]], aspect="auto", origin="lower", norm=colors.SymLogNorm(linthresh=0.001, linscale=0.5), interpolation=interpolation, vmin=-1., vmax=1.)
     ax.set_xlabel(r"Spin parameter q = 2$\Omega / \omega$")
     ax.set_ylabel(r"Eigenvalue $\lambda$")
     if logscale:

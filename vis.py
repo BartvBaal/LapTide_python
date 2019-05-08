@@ -111,7 +111,7 @@ def rootfind_dimless_alt(m, k, qlist, ecc=0., chi=0., gravfunc=grav.chi_gravity_
         args = m, k, qlist, ecc, chi
     guesslist = getattr(curvasym, wavemode)(*args)
 
-    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=False, inc=inc)
+    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=False, inc=inc)  # if the mode is an argument here it can figure out how to normalize in a proper way ...
     if ecc == .05:
         ls="dotted"
     elif ecc == .1:
@@ -469,14 +469,14 @@ def main():
 #        rootfind_dimless_alt(m, 0, np.linspace(-10., -1.5, 85), ecc=ecc, chi=chi, inc=1.0075)
 #        rootfind_dimless_alt(m, 2, np.linspace(10., 1.5, 85), ecc=ecc, chi=chi, inc=1.0075)
 #        rootfind_dimless_alt(m, 1, np.linspace(10., 1.5, 85), ecc=ecc, chi=chi, inc=1.0075)
-#        rootfind_dimless_alt(m, 0, np.linspace(10., 1.5, 85), ecc=ecc, chi=chi, inc=1.0075)
+#        rootfind_dimless_alt(m, 0, np.linspace(10., 1.5, 85), ecc=ecc, chi=chi, inc=1.0015)
 #        rootfind_dimless_alt(m, -1, np.linspace(-10., -3.25, 50), ecc=ecc, chi=chi, inc=1.0075)
 #        rootfind_dimless_alt(m, -2, np.linspace(-10., -8.5, 25), ecc=ecc, chi=chi, inc=1.05)
 #    plt.yscale('log')
 #    plt.show()
 
-    qmin, qmax, size = 1.5, 4., 35
-    ecc, chi = 0.0, 0.0
+    qmin, qmax, size = -15., -8.5, 125
+    ecc, chi = 0.1, 0.2
     dlngrav = partial(grav.chi_gravity_deriv, chi)
     qlist = np.linspace(qmin, qmax, 200)
 #    asymcompare = [qlist, curvasym.g_modes_list(m, 2, qlist, ecc=ecc, chi=chi)]

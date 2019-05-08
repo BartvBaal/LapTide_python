@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
+import os
+import sys
+
 import numpy as np
 import scipy.special as special
 from functools import partial
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 import classes.Curvilinear as Curvilinear
 
@@ -10,6 +14,14 @@ import helpers.rootfinder as roots
 import helpers.Property as Property
 import helpers.LaPlace_asymptotes as asym
 import helpers.gravity_functions as grav
+
+
+def blockprint():
+    sys.stdout = open(os.devnull, 'w')
+
+def enableprint():
+    sys.stdout = sys.__stdout__
+
 
 def rootfind_dimless(mode_admin, verbose=False, inc=1.0033):
     """
@@ -200,6 +212,63 @@ def eccentricity_compare(m, k, s, q, ecclist, chilist, gravfunc):
     plt.show()
 
 
+def eccentricity_movie(m, k, s, q, eccstart, eccend, frames, gravfunc):
+    """
+    Creates a movie at a set m, k and q for "frames" steps between eccstart and eccend.
+    Will assume chi = 2*ecc
+    """
+    N = 125
+
+    mode_admin = Property.Mode_admin(m, k)
+    mode_admin.set_qlist(np.asarray([q]))
+    ecclist = np.linspace(eccstart, eccend, frames)
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(3, 1, 1)
+    ax2 = fig.add_subplot(3, 1, 2)
+    ax3 = fig.add_subplot(3, 1, 3)
+
+    def update(i):
+        blockprint()
+        ecc = ecclist[i]
+        chi = ecc*2.
+        dlngrav = partial(gravfunc, chi)
+        mode_admin.set_curvilinear(ecc, chi, dlngrav)
+        lam, wavename, direc = rootfind_dimless(mode_admin, verbose=False, inc=1.075)[1:]
+
+        mu = np.linspace(1., 0., N)
+        sigma = np.sqrt(1-(ecc*(1-mu**2)))
+        num_hough, num_houghHat = numerics(Curvilinear, [mode_admin, q], lam, N)
+        num_houghTilde = -m * num_hough - q*mu/sigma * num_houghHat
+
+        # Clear the subplots
+        ax1.cla()
+        ax2.cla()
+        ax3.cla()
+
+        ax1.set_xlim([0, 1])
+        ax2.set_xlim([0, 1])
+        ax3.set_xlim([0, 1])
+        ax1.set_ylabel(r"$\Theta(\sigma)$")
+        ax2.set_ylabel(r"$\hat\Theta(\sigma)$")
+        ax3.set_ylabel(r"$\tilde\Theta(\sigma)$")
+        ax3.set_xlabel(r"$\mu \equiv \cos(\theta)$")
+
+        ax1.set_title("m: {}, k: {}, s: {}, q: {}  ({}grade {}), ecc: {}, $\chi$: {}".format(m, k, s, q, direc, wavename, ecc, chi))
+        ax1.plot(mu, num_hough)
+        ax2.plot(mu, num_houghHat)
+        ax3.plot(mu, num_houghTilde)
+        enableprint()
+
+    
+    # Set up formatting for the movie files
+    Writer = animation.writers['ffmpeg']
+    writer = Writer(fps=60, metadata=dict(artist='Bart'), bitrate=750)
+
+    ani = animation.FuncAnimation(fig, update, frames=frames, interval=1, repeat=False)
+    plt.show()
+
+
 
 if __name__ == "__main__":
 #    m, k, s, q = -2, 2, 1, 3  # Pro g mode
@@ -208,18 +277,17 @@ if __name__ == "__main__":
 #    m, k, s, q = 2, 0, 1, 3  # Retro g mode
 #    m, k, s, q = -2, 1, 0, 3  # Pro Yanai
 #    m, k, s, q = 2, -1, 0, 6  # Retro Yanai
-    m, k, s, q = 2, -2, 1, 12.5  # Retro r mode
-#    m, k, s, q = -2, 0, -1, 3  # Kelvin check - this should use different functions!
+#    m, k, s, q = 2, -2, 1, 17.5  # Retro r mode
+    m, k, s, q = -2, 0, -1, 3  # Kelvin check - this should use different functions!
 #    m, k, s, q = -2, 0, -1, 10  # LeeSaio1997 check - these do not require new functions ?
 
     ecc = 0.
     chi = 0.
+#    make_houghs(m, k, s, q, ecc, chi, grav.chi_gravity_deriv)
 
-    make_houghs(m, k, s, q, ecc, chi, grav.chi_gravity_deriv)
-
-    ecclist = [0., 0.05, .1, .15]
-    chilist = [0., .1, .2, .3]
-    eccentricity_compare(m, k, s, q, ecclist, chilist, grav.chi_gravity_deriv)
+    ecclist = [0., 0.05, .1, .15, .25]
+    chilist = [0., .1, .2, .3, .5]
+#    eccentricity_compare(m, k, s, q, ecclist, chilist, grav.chi_gravity_deriv)
 
     # To reproduce the Townsend plots 
     mlist = [-2, 2, -2, 2, -2, 2, 2, 2]
@@ -228,8 +296,14 @@ if __name__ == "__main__":
     qlist = [3, 3, 3, 3, 3, 3, 6, 15]
     ecc, chi, gravfunc = 0., 0., grav.chi_gravity_deriv
 
-    for m, k, s, q in zip(mlist, klist, slist, qlist):
-        make_houghs(m, k, s, q, ecc, chi, gravfunc)
+#    for m, k, s, q in zip(mlist, klist, slist, qlist):
+#        make_houghs(m, k, s, q, ecc, chi, gravfunc)
+
+    ## TODO: update the animator to first create the data, then show it, since it takes too long to generate the data to do a nice, fast movie where you actually  see the lines shift
+    m, k, s, q = 2, -2, 1, 16.
+    eccstart, eccend, frames = 0., .2, 150
+    gravfunc = grav.chi_gravity_deriv
+    eccentricity_movie(m, k, s, q, eccstart, eccend, frames, gravfunc)
 
 
 

@@ -200,7 +200,7 @@ def multi_rootfind_fromguess_dimless(mode_admin, verbose=False, inc=1.0033):
     else:
         args = mode_admin.m, mode_admin.k, mode_admin.qlist, mode_admin.ecc, mode_admin.chi
     guesslist = getattr(curvasym, wavemode)(*args)
-    mode_admin.guess = guesslist
+    mode_admin.guess = guesslist  # Might need this later after rootfinding so store it
 
     neg_allowed = True
     inc = inc

@@ -11,37 +11,14 @@ import helpers.Property as Property
 import helpers.LaPlace_asymptotes as asym
 import helpers.gravity_functions as grav
 
-def rootfind_dimless(m, k, q, ecc=0, dlngrav=partial(grav.chi_gravity_deriv, 0.), verbose=False, inc=1.0033):
+def rootfind_dimless(mode_admin, verbose=False, inc=1.0033):
     """
     For a given m, k and qlist, and potentially for different radius, mass and
     period as well, determines the wave mode and calculates the eigenvalues
     from the asymptotically calculated values.
     """
-    mode_admin = Property.Mode_admin(m, k)
-    mode_admin.validate_values()
-    is_even = mode_admin.is_even()
-    l = mode_admin.get_l()
-
-    if q*m < 0:
-        direction = "pro"
-    else:
-        direction = "retro"
-
-    wavemode = mode_admin.get_wavemode(direction)
-    print is_even, l, wavemode, direction
-
-    wavemode += "s"
-    if wavemode[0] == "g":
-        wavemode += "_list"
-    wavemode = wavemode.replace(" ", "_")
-    if wavemode[0] == "y" or wavemode[0] == "k":  # yanai and kelvin modes only have two arguments
-        args = m, q
-    else:
-        args = m, k, q
-    guess = getattr(asym, wavemode)(*args)
-
-    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(m, q, is_even, guess, ecc, dlngrav, verbose=False, inc=inc)
-    return guess, found_lamlist, wavemode.split("_")[0], direction
+    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(mode_admin, verbose=False, inc=inc)
+    return mode_admin.guess, found_lamlist, mode_admin.mode.split("_")[0], mode_admin.direction
 
 
 def houghHat(s, sig):
@@ -96,8 +73,7 @@ def kelvinhoughTilde(mu, m, q):
     return fst * brckt * exp
 
 
-def numerics(ode_class, ode_args, lam, is_even, N):
-    ode_args.insert(2, is_even)
+def numerics(ode_class, ode_args, lam, N):
     ode_solver = ode_class.solver_t_dimless(*ode_args)
 
     steps = np.linspace(ode_class.t0, ode_class.t1, N)
@@ -119,10 +95,15 @@ def townsendify(hough, houghhat, houghtilde, k, m):
     return hough/divisor, houghhat/divisor, houghtilde/divisor
 
 
-def make_houghs(m, k, s, q, ecc, chi):
+def make_houghs(m, k, s, q, ecc, chi, gravfunc):
     N = 125
-    dlngrav = partial(grav.chi_gravity_deriv, chi)
-    guess, lam, wavename, direc = rootfind_dimless(m, k, np.asarray([q]), ecc, dlngrav, verbose=False, inc=1.075)
+
+    dlngrav=partial(gravfunc, chi)
+    mode_admin = Property.Mode_admin(m, k)
+    mode_admin.set_qlist(np.asarray([q]))
+    mode_admin.set_curvilinear(ecc, chi, dlngrav)
+
+    guess, lam, wavename, direc = rootfind_dimless(mode_admin, verbose=False, inc=1.075)
     mu = np.linspace(1., 0., N)
     L = lam**.5
     Lnu = L * q  # it should just be q but that breaks if q is negative?
@@ -134,14 +115,14 @@ def make_houghs(m, k, s, q, ecc, chi):
 
     # Numeric values
     is_even = Curvilinear.check_is_even(m, k)
-    num_hough, num_houghHat = numerics(Curvilinear, [m, q, ecc, dlngrav], lam, is_even, N)
+    num_hough, num_houghHat = numerics(Curvilinear, [mode_admin, q], lam, N)
     num_houghTilde = -m * num_hough - q*mu * num_houghHat
 
     ## Analytic values
     ana_houghHat = houghHat(s, guesssig)
     ana_hough = hough(s, guesssig, m, guess, q)
     ana_houghTilde = houghTilde(s, guesssig, m, guess, q)
-    if wavename == "kelvin":
+    if wavename == "kelvin mode":
         ana_houghHat = kelvinhoughHat(mu, m, q)
         ana_hough = kelvinhough(mu, m, q)
         ana_houghTilde = kelvinhoughTilde(mu, m, q)
@@ -175,10 +156,13 @@ def make_houghs(m, k, s, q, ecc, chi):
     plt.show()
 
 
-def eccentricity_compare(m, k, s, q, ecclist, chilist):
+def eccentricity_compare(m, k, s, q, ecclist, chilist, gravfunc):
     if len(ecclist) != len(chilist):
         raise ValueError("Warning: ecclist and chilist should be the same length!")
     N = 125
+
+    mode_admin = Property.Mode_admin(m, k)
+    mode_admin.set_qlist(np.asarray([q]))
 
     fig = plt.figure()
     ax1 = fig.add_subplot(3, 1, 1)
@@ -193,14 +177,15 @@ def eccentricity_compare(m, k, s, q, ecclist, chilist):
     ax3.set_xlabel(r"$\mu \equiv \cos(\theta)$")
 
     for ecc, chi in zip(ecclist, chilist):
-        dlngrav = partial(grav.chi_gravity_deriv, chi)
-        guess, lam, wavename, direc = rootfind_dimless(m, k, np.asarray([q]), ecc, dlngrav, verbose=False, inc=1.075)
+        dlngrav=partial(gravfunc, chi)
+        mode_admin.set_curvilinear(ecc, chi, dlngrav)
+        guess, lam, wavename, direc = rootfind_dimless(mode_admin, verbose=False, inc=1.075)
         mu = np.linspace(1., 0., N)
         sigma = np.sqrt(1-(ecc*(1-mu**2)))
 
         # Numeric values
         is_even = Curvilinear.check_is_even(m, k)
-        num_hough, num_houghHat = numerics(Curvilinear, [m, q, ecc, dlngrav], lam, is_even, N)
+        num_hough, num_houghHat = numerics(Curvilinear, [mode_admin, q], lam, N)
         num_houghTilde = -m * num_hough - q*mu/sigma * num_houghHat
 
         ax1.set_title("m: {}, k: {}, s: {}, q: {}  ({}grade {})".format(m, k, s, q, direc, wavename))
@@ -223,28 +208,28 @@ if __name__ == "__main__":
 #    m, k, s, q = 2, 0, 1, 3  # Retro g mode
 #    m, k, s, q = -2, 1, 0, 3  # Pro Yanai
 #    m, k, s, q = 2, -1, 0, 6  # Retro Yanai
-#    m, k, s, q = 2, -2, 1, 12.5  # Retro r mode
-    m, k, s, q = -2, 0, -1, 3  # Kelvin check - this should use different functions!
+    m, k, s, q = 2, -2, 1, 12.5  # Retro r mode
+#    m, k, s, q = -2, 0, -1, 3  # Kelvin check - this should use different functions!
 #    m, k, s, q = -2, 0, -1, 10  # LeeSaio1997 check - these do not require new functions ?
 
     ecc = 0.
     chi = 0.
 
-    make_houghs(m, k, s, q, ecc, chi)
+    make_houghs(m, k, s, q, ecc, chi, grav.chi_gravity_deriv)
 
     ecclist = [0., 0.05, .1, .15]
     chilist = [0., .1, .2, .3]
-    eccentricity_compare(m, k, s, q, ecclist, chilist)
+    eccentricity_compare(m, k, s, q, ecclist, chilist, grav.chi_gravity_deriv)
 
     # To reproduce the Townsend plots 
     mlist = [-2, 2, -2, 2, -2, 2, 2, 2]
     klist = [2, 2, 1, 1, 0, 0, -1, -2]
     slist = [1, 3, 0, 2, -1, 1, 0, 1]
     qlist = [3, 3, 3, 3, 3, 3, 6, 15]
-    ecc, chi = 0., 0.
+    ecc, chi, gravfunc = 0., 0., grav.chi_gravity_deriv
 
     for m, k, s, q in zip(mlist, klist, slist, qlist):
-        make_houghs(m, k, s, q, ecc, chi)
+        make_houghs(m, k, s, q, ecc, chi, gravfunc)
 
 
 

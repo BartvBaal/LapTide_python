@@ -258,18 +258,22 @@ class ODE_t_dimless:
 
 class solver_t_dimless:
     """Shoot for x=0 from x=1-eps, can also save eigenvalues of solution"""
-    def __init__(self, m, q, is_even, ecc, dlngrav):
-        self.m = m
+    def __init__(self, mode_admin, q):
+        self.m = mode_admin.m
         self.q = q
-        self.score = score_t(is_even)
-        self.ecc = ecc
-        self.dlngrav = dlngrav
-        if self.m*self.q > 0:
-            self.is_prograde = False
-        else:
-            self.is_prograde = True
-        self.is_even_int = 1  # Should only be 0 for Kelvin modes?
-#        if self.m*self.q < 0 and ## Need more info to recognize wavemode
+        self.score = score_t(mode_admin.is_even)
+        self.ecc = mode_admin.ecc
+        self.dlngrav = mode_admin.dlngrav
+        self.wavemode = mode_admin.mode
+        self.idx = 1
+        if self.wavemode == "kelvin mode":
+            self.idx = 0
+#        if self.m*self.q > 0:
+#            self.is_prograde = False
+#        else:
+#            self.is_prograde = True
+#        self.is_even_int = 1  # Should only be 0 for Kelvin modes?
+##        if self.m*self.q < 0 and ## Need more info to recognize wavemode
 
     def set_m(self, m):
         self.m = m
@@ -282,15 +286,15 @@ class solver_t_dimless:
 
     def shoot(self, lam):
         cur = ODE_t_dimless(self.m, self.q, lam, self.ecc, self.dlngrav)
-        obs = Observers.max_t(self.is_even_int)
+        obs = Observers.max_t(self.idx)
         y1 = run_ode(cur, obs)
 #        print y1, obs.max_f
         return self.score(y1 / obs.max_f)  # TODO: find alternative for normalization!
 
     def __call__(self, lam):
 #        print self.m*self.m*.75 < lam < self.m*self.m*1.25
-        if self.m*self.m*.75 < lam < self.m*self.m*1.25 and self.is_prograde:
-            self.is_even_int = 0
+#        if self.m*self.m*.75 < lam < self.m*self.m*1.25 and self.is_prograde:
+#            self.is_even_int = 0
         return self.shoot(lam)
 
     def save(self, lam):

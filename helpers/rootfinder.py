@@ -5,6 +5,7 @@ import classes.LaPlace as LaPlace
 import classes.Curvilinear as Curvilinear
 import helpers.Straddle as Straddle
 import helpers.Property as Property
+import helpers.Curvilinear_asymptotes as curvasym
 
 
 def shoot_laplace(lam, m, q, is_even):
@@ -26,13 +27,13 @@ def rootfinder_curvilinear(m, q, lamlist, is_even, r_eq, mass, period):
     return optimize.brentq(shoot_curvilinear, lamlist[0], lamlist[1], args=(m, q, is_even, r_eq, mass, period), full_output=True)
 
 
-def shoot_curvi_dimless(lam, m, q, is_even, ecc, dlngrav):
-    curvi_solver = Curvilinear.solver_t_dimless(m, q, is_even, ecc, dlngrav)
+def shoot_curvi_dimless(lam, mode_admin, q):
+    curvi_solver = Curvilinear.solver_t_dimless(mode_admin, q)  # mode_admin.mode should be the strings of the wave, not the strings of the function calls
     return curvi_solver(lam)
 
 
-def rootfinder_curvi_dimless(m, q, lamlist, is_even, ecc, dlngrav):
-    return optimize.brentq(shoot_curvi_dimless, lamlist[0], lamlist[1], args=(m, q, is_even, ecc, dlngrav), full_output=True)
+def rootfinder_curvi_dimless(mode_admin, q, lamlist):
+    return optimize.brentq(shoot_curvi_dimless, lamlist[0], lamlist[1], args=(mode_admin, q), full_output=True)
 
 
 
@@ -177,22 +178,45 @@ def multi_rootfind_curvilinear(m, k, qlist, is_even, r_eq, mass, period):
     return qlist, found_lamlist
 
 
-def multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=False, inc=1.0033):
+#def multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=False, inc=1.0033):
+def multi_rootfind_fromguess_dimless(mode_admin, verbose=False, inc=1.0033):
+#    m = mode_admin.m
+#    is_even = mode_admin.is_even
+#    qlist = mode_admin.qlist
+#    ecc = mode_admin.ecc
+#    dlngrav = mode_admin.dlngrav
+#    mode = mode_admin.mode
+
+    direction = mode_admin.get_direction()
+    wavemode = mode_admin.get_wavemode(direction)
+    print mode_admin.is_even, mode_admin.l, wavemode
+
+    wavemode += "s"
+    if wavemode[0] == "g":
+        wavemode += "_list"
+    wavemode = wavemode.replace(" ", "_")
+    if wavemode[0] == "y" or wavemode[0] == "k":  # yanai and kelvin modes only have two arguments
+        args = mode_admin.m, mode_admin.qlist, mode_admin.ecc, mode_admin.chi
+    else:
+        args = mode_admin.m, mode_admin.k, mode_admin.qlist, mode_admin.ecc, mode_admin.chi
+    guesslist = getattr(curvasym, wavemode)(*args)
+    mode_admin.guess = guesslist
+
     neg_allowed = True
     inc = inc
     N_steps = 250
-    found_lamlist = np.zeros(len(qlist))
-    fn = Curvilinear.solver_t_dimless(m, qlist[0], is_even, ecc, dlngrav)
+    found_lamlist = np.zeros(len(mode_admin.qlist))
+    fn = Curvilinear.solver_t_dimless(mode_admin, mode_admin.qlist[0])
     straddle = Straddle.straddle_t(fn, inc, N_steps)
 
-    for i in range(len(qlist)):
-        q = qlist[i]
+    for i in range(len(mode_admin.qlist)):
+        q = mode_admin.qlist[i]
         fn.set_q(q)
         bisec = straddle.search_log(guesslist[i], verbose=verbose, neg_allowed=neg_allowed)
-        root = rootfinder_curvi_dimless(m, q, bisec, is_even, ecc, dlngrav)[0]
+        root = rootfinder_curvi_dimless(mode_admin, q, bisec)[0]
 
         found_lamlist[i] = root
         print q, root, bisec
 
-    return qlist, found_lamlist
+    return mode_admin.qlist, found_lamlist
 

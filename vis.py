@@ -434,6 +434,22 @@ def rootfind_dimless(m, k, qlist, ecc=0., dlngrav=partial(grav.chi_gravity_deriv
     plt.plot(qlist, found_lamlist, ls=ls)
 
 
+def rootfind_dimless_new(mode_admin, verbose=False, inc=1.0033):
+    """
+    For a given m, k and qlist, and potentially for different radius, mass and
+    period as well, determines the wave mode and calculates the eigenvalues
+    from the asymptotically calculated values.
+    """
+    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(mode_admin, verbose=False, inc=inc)  # if the mode is an argument here it can figure out how to normalize in a proper way ...
+    if mode_admin.ecc == .05:
+        ls="dotted"
+    elif mode_admin.ecc == .1:
+        ls="dashed"
+    else:
+        ls="solid"
+    plt.plot(qlist, found_lamlist, ls=ls)
+
+
 def main():
     # Need to consider if I want the inputs as m, l or m, k - using k for now
     if len(sys.argv) != 3:
@@ -444,7 +460,7 @@ def main():
 
     mode_admin = Property.Mode_admin(m, k)
     mode_admin.validate_values()
-    is_even = mode_admin.is_even()
+    is_even = mode_admin.check_is_even()
     l = mode_admin.get_l()
     wavemode = mode_admin.get_wavemode()
 
@@ -475,8 +491,23 @@ def main():
 #    plt.yscale('log')
 #    plt.show()
 
-    qmin, qmax, size = -15., -8.5, 125
-    ecc, chi = 0.1, 0.2
+
+#    qlist = np.linspace(10., 1.5, 85)
+#    mode_admin.set_qlist(qlist)
+#    wavemode = mode_admin.get_wavemode()
+#    print mode_admin.mode, mode_admin.l, mode_admin.is_even
+
+#    for ecc in [.0, .05, .1]:
+#        chi = ecc*2
+#        dlngrav = partial(grav.chi_gravity_deriv, chi)
+#        mode_admin.set_curvilinear(ecc, chi, dlngrav)
+#        rootfind_dimless_new(mode_admin)
+#    plt.yscale('log')
+#    plt.show()
+
+
+    qmin, qmax, size = -11., -9., 50
+    ecc, chi = 0.2, 0.4
     dlngrav = partial(grav.chi_gravity_deriv, chi)
     qlist = np.linspace(qmin, qmax, 200)
 #    asymcompare = [qlist, curvasym.g_modes_list(m, 2, qlist, ecc=ecc, chi=chi)]

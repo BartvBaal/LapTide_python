@@ -16,6 +16,7 @@ def custom_formatwarning(msg, *args, **kwargs):
     warningloc = "{}:{}: {}: ".format(loc.replace(cwd, "")[1:], line, name)
     return warningloc + str(msg) + '\n'
 warnings.formatwarning = custom_formatwarning
+warnings.simplefilter('always', InputWarning)
 
 
 class Mode_admin:
@@ -28,6 +29,7 @@ class Mode_admin:
         self.k = k
         self.l = self.get_l()
         self.validate_values()
+        self.is_even = self.check_is_even()
 
     def get_l(self):
         """
@@ -37,7 +39,7 @@ class Mode_admin:
         self.l = self.k + np.abs(self.m)
         return self.l
 
-    def is_even(self):
+    def check_is_even(self):
         """
         Check if m+k is even (True) or odd (False)
         """
@@ -55,12 +57,19 @@ class Mode_admin:
             self.mode = "g mode"
         else:
             if not direction:  # this should now never happen anymore
-                self.mode = "Mode depends on Prograde/Retrograde spin"
-            elif direction.lower() in ["prograde", "pro"]:
+                try:
+                    direction = self.set_direction()
+                except:
+                    self.mode = "Mode depends on Prograde/Retrograde spin"
+                    return self.mode
+            if direction.lower() in ["prograde", "pro"]:
                 if self.k == 1:
                     self.mode = "yanai mode"
                 elif self.k == 0:
                     self.mode = "kelvin mode"
+                else:
+                    self.validate_values()
+                    exit()
             elif direction.lower() in ["retrograde", "retro"]:
                 if self.k == -1:
                     self.mode = "yanai mode"
@@ -69,8 +78,34 @@ class Mode_admin:
         return self.mode
 
     def validate_values(self):
-        if self.m > self.l:
-            warnings.warn("Legendre polynomials undefined for m>l, input: ({}, {}). Eigenvalues might not exist.".format(self.m, self.l), InputWarning)
+        if abs(self.m) > abs(self.l):
+            warnings.warn("Legendre polynomials undefined for m>l, input: ({}, {}). Eigenvalues might not exist.".format(abs(self.m), abs(self.l)), InputWarning)
+
+    def set_qlist(self, qlist):
+        """
+        Stores the qlist into the wavemode, helpful for some function calls to
+        put all data in one class
+        """
+        self.qlist = qlist
+
+    def set_curvilinear(self, ecc, chi, dlngrav):
+        """
+        Stores the eccentricity and dlngrav, helpful for some later function
+        cals to have all data stored in one class
+        """
+        self.ecc = ecc
+        self.chi = chi
+        self.dlngrav = dlngrav
+
+    def get_direction(self):
+        """
+        Should only be called *AFTER* qlist has been set!
+        """
+        if np.average(self.qlist)*self.m < 0:
+            self.direction = "pro"
+        else:
+            self.direction = "retro"
+        return self.direction
 
 
 class Curvi_admin:

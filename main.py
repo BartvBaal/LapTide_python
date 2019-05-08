@@ -147,29 +147,11 @@ def rootfind_dimless_alt(m, k, qlist, ecc=0., chi=0., gravfunc=grav.chi_gravity_
     """
     dlngrav=partial(gravfunc, chi)
     mode_admin = Property.Mode_admin(m, k)
-    mode_admin.validate_values()
-    is_even = mode_admin.is_even()
-    l = mode_admin.get_l()
+    mode_admin.set_qlist(qlist)
+    mode_admin.set_curvilinear(ecc, chi, dlngrav)
 
-    if np.average(qlist)*m < 0:
-        direction = "pro"
-    else:
-        direction = "retro"
-
-    wavemode = mode_admin.get_wavemode(direction)
-    print is_even, l, wavemode
-
-    wavemode += "s"
-    if wavemode[0] == "g":
-        wavemode += "_list"
-    wavemode = wavemode.replace(" ", "_")
-    if wavemode[0] == "y" or wavemode[0] == "k":  # yanai and kelvin modes only have two arguments
-        args = m, qlist, ecc, chi
-    else:
-        args = m, k, qlist, ecc, chi
-    guesslist = getattr(curvasym, wavemode)(*args)
-
-    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=verbose, inc=inc)
+    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(mode_admin, verbose=False, inc=inc)
+#    roots.multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=verbose, inc=inc)
     if saving:
         savestring = "data/Curvilinear/range_{}_{}_steps_{}_kval_{}_ecc_{}_chi_{}.txt"\
                                     .format(qlist[0],qlist[-1],len(qlist),str(k), str(ecc), str(chi))
@@ -194,7 +176,7 @@ def main():
 
     mode_admin = Property.Mode_admin(m, k)
     mode_admin.validate_values()  # Mode_admin now checks this upon init!
-    is_even = mode_admin.is_even()
+    is_even = mode_admin.check_is_even()
     l = mode_admin.get_l()
     wavemode = mode_admin.get_wavemode()
 

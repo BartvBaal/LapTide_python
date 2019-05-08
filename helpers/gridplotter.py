@@ -4,7 +4,6 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 
-
 import classes.Curvilinear as Curvilinear
 
 import helpers.Curvilinear_asymptotes as curvasym
@@ -18,14 +17,12 @@ def create_grid(m, k, size, qmin, qmax, ecc, chi, dlngrav, saving=False):
 
     mode_admin = Property.Mode_admin(m, k)
     mode_admin.validate_values()
-    is_even = mode_admin.is_even()
+    is_even = mode_admin.check_is_even()
     l = mode_admin.get_l()
+    mode_admin.set_curvilinear(ecc, chi, dlngrav)
+    mode_admin.set_qlist(qarr)
 
-    if np.average(qarr) < 0:
-        direction = "retro"
-    else:
-        direction = "pro"
-
+    direction = mode_admin.get_direction()
     wavemode = mode_admin.get_wavemode(direction)
     print is_even, l, wavemode
 
@@ -47,7 +44,7 @@ def create_grid(m, k, size, qmin, qmax, ecc, chi, dlngrav, saving=False):
 
     values = []
     for q, lam in zip(qdim, lamdim):
-        value = roots.shoot_curvi_dimless(lam, m, q, is_even, ecc, dlngrav)
+        value = roots.shoot_curvi_dimless(lam, mode_admin, q)
         values.append(value)
         if lam in [lamdim[0]]:
             print q, lam, value
@@ -71,8 +68,9 @@ def lambda_grid(m, k, size, qmin, qmax, lammin, lammax, ecc, chi, dlngrav, savin
 
     mode_admin = Property.Mode_admin(m, k)
     mode_admin.validate_values()
-    is_even = mode_admin.is_even()
-    if is_even:
+#    is_even = mode_admin.check_is_even()
+    mode_admin.set_curvilinear(ecc, chi, dlngrav)
+    if mode_admin.is_even:
         evenstr = "Even"
     else:
         evenstr = "Odd"
@@ -82,7 +80,7 @@ def lambda_grid(m, k, size, qmin, qmax, lammin, lammax, ecc, chi, dlngrav, savin
 
     values = []
     for q, lam in zip(qdim, lamdim):
-        value = roots.shoot_curvi_dimless(lam, m, q, is_even, ecc, dlngrav)
+        value = roots.shoot_curvi_dimless(lam, mode_admin, q)
         values.append(value)
         if lam in [lamdim[0]]:
             print q, lam, value

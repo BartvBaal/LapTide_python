@@ -30,7 +30,7 @@ def create_grid(m, k, size, qmin, qmax, ecc, chi, dlngrav, saving=False):
     if wavemode[0] == "g":
         wavemode += "_list"
     wavemode = wavemode.replace(" ", "_")
-    if wavemode[0] == "y" or wavemode[0] == "k":  # yanai and kelvin modes only have two arguments
+    if wavemode[0] == "y" or wavemode[0] == "k":  # yanai and kelvin modes dont have k argument
         args = m, qarr, ecc, chi
     else:
         args = m, k, qarr, ecc, chi
@@ -61,25 +61,29 @@ def create_grid(m, k, size, qmin, qmax, ecc, chi, dlngrav, saving=False):
     return all_data
 
 
-def lambda_grid(m, k, size, qmin, qmax, lammin, lammax, ecc, chi, dlngrav, saving=False):
+def lambda_grid(m, k, size, qmin, qmax, lammin, lammax, ecc, chi, dlngrav, saving=False, force_func=False):
     qarr = np.linspace(qmin, qmax, size)
     lamarr = np.linspace(lammin, lammax, size)
     print lamarr
 
     mode_admin = Property.Mode_admin(m, k)
     mode_admin.validate_values()
-#    is_even = mode_admin.check_is_even()
     mode_admin.set_curvilinear(ecc, chi, dlngrav)
+    mode_admin.set_qlist(qarr)
     if mode_admin.is_even:
         evenstr = "Even"
     else:
         evenstr = "Odd"
+    direction = mode_admin.get_direction()
+    wavemode = mode_admin.get_wavemode(direction)
 
     qdim = np.repeat(qarr, size)
     lamdim = np.tile(lamarr, size)
 
     values = []
     for q, lam in zip(qdim, lamdim):
+        if force_func:
+            mode_admin.wavemode = "kelvin mode"
         value = roots.shoot_curvi_dimless(lam, mode_admin, q)
         values.append(value)
         if lam in [lamdim[0]]:
@@ -88,7 +92,7 @@ def lambda_grid(m, k, size, qmin, qmax, lammin, lammax, ecc, chi, dlngrav, savin
 
     all_data = np.asarray(zip(qdim, lamdim, values))
     if saving:
-        folderloc = "data/lamgrid/"
+        folderloc = "data/lamgrid/m_{}/".format(m)
         if not os.path.exists(folderloc):
             os.makedirs(folderloc)
         savestring = folderloc + "qrange_{}_{}_lamrange_{}_{}_steps_{}_ecc_{}_chi_{}_{}.txt"\
@@ -117,7 +121,10 @@ def plot_grid(all_data, asymcompare=None, title=None, interpolation=None, logsca
     ax.set_xlabel(r"Spin parameter q = 2$\Omega / \omega$")
     ax.set_ylabel(r"Eigenvalue $\lambda$")
     if logscale:
-        ax.set_yscale('log')
+        ax.set_yscale('symlog')
+        if min(lamvals) < 0. and max(lamvals) > 0.:
+            ax.set_yticks([-1., -.1, 0, .1])
+            ax.set_yticks([-.9, -.8, -.7, -.6, -.5, -.4, -.3, -.2, .2], minor=True)
     if title:
         ax.set_title(title)
 
@@ -127,6 +134,7 @@ def plot_grid(all_data, asymcompare=None, title=None, interpolation=None, logsca
     # Create colorbar
     cbar = ax.figure.colorbar(im, ax=ax)
     cbar.ax.set_ylabel("Value", rotation=-45, va="bottom")
+#    plt.yticks(np.arange(4), (-1.25, -.75,-.25,.25))
     plt.show()
 
 

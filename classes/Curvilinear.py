@@ -123,12 +123,12 @@ def run_ode(cur, obs):
     # stepper = 'dopri5'
     stepper = 'dop853'
     atol = 0.
-    rtol = 2.**-32  # 1./(2**30), 1./(2**48)
-    nsteps = 9600  # 2000, 9600
+    rtol = 2.**-30  # 1./(2**30), 1./(2**48)
+    nsteps = 2000  # 2000, 9600
     y0 = cur.init_y()
 #    first_step = 2.**-30
     solver = ode(cur)
-    solver.set_integrator(stepper, atol=atol, rtol=rtol, nsteps=nsteps)
+    solver.set_integrator(stepper, atol=atol, rtol=rtol, nsteps=nsteps) #, verbosity=0)
     solver.set_solout(obs)
     solver.set_initial_value(y0, t0)
     return solver.integrate(t1)
@@ -218,7 +218,7 @@ class ODE_t_dimless:
         self.msq = m*m
         self.qsq = q*q
 
-        self.ecc = ecc
+        self.ecc = ecc**2.
         self.dlngrav = dlngrav  # this stores the gravity function with chi set
 
         self.alpha = .5 * abs(self.m)
@@ -248,6 +248,7 @@ class ODE_t_dimless:
 #        dy1dt = ( (self.lam*sinsq - self.msq)*y[0] + (twoax - mqx)*y[1] ) / sinsq
         dy1dt = (dlng + sig*self.lam)*y[0] - \
                 (sig*self.msq*y[0] - (twoax - mqx)*y[1]) / sinsq  # eq(9), rewritten
+#        print t, y
         return [dy0dt, dy1dt]
 
     def transform(self, steps, solun):
@@ -289,6 +290,8 @@ class solver_t_dimless:
         obs = Observers.max_t(self.idx)
         y1 = run_ode(cur, obs)
 #        print y1, obs.max_f
+#        exit()
+#        print y1 / obs.max_f  # If I want to save both y[0] and y[1], don't use score
         return self.score(y1 / obs.max_f)  # TODO: find alternative for normalization!
 
     def __call__(self, lam):

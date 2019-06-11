@@ -89,9 +89,8 @@ def rootfind_dimless_alt(m, k, qlist, ecc=0., chi=0., gravfunc=grav.chi_gravity_
     """
     dlngrav=partial(gravfunc, chi)
     mode_admin = Property.Mode_admin(m, k)
-    mode_admin.validate_values()
-    is_even = mode_admin.is_even()
-    l = mode_admin.get_l()
+    mode_admin.set_qlist(qlist)
+    mode_admin.set_curvilinear(ecc, chi, dlngrav)
 
     if np.average(qlist)*m < 0:
         direction = "pro"
@@ -99,7 +98,7 @@ def rootfind_dimless_alt(m, k, qlist, ecc=0., chi=0., gravfunc=grav.chi_gravity_
         direction = "retro"
 
     wavemode = mode_admin.get_wavemode(direction)
-    print is_even, l, wavemode
+    print mode_admin.is_even, mode_admin.l, mode_admin.mode
 
     wavemode += "s"
     if wavemode[0] == "g":
@@ -111,10 +110,10 @@ def rootfind_dimless_alt(m, k, qlist, ecc=0., chi=0., gravfunc=grav.chi_gravity_
         args = m, k, qlist, ecc, chi
     guesslist = getattr(curvasym, wavemode)(*args)
 
-    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=False, inc=inc)  # if the mode is an argument here it can figure out how to normalize in a proper way ...
-    if ecc == .05:
+    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(mode_admin, verbose=verbose, inc=inc)  # if the mode is an argument here it can figure out how to normalize in a proper way ...
+    if ecc == .25:
         ls="dotted"
-    elif ecc == .1:
+    elif ecc == .5:
         ls="dashed"
     else:
         ls="solid"
@@ -196,14 +195,15 @@ def compare_newfile(m):
 def compare_curvasym(m):
     qneg = np.linspace(-1, -10, 9.5e2+4)
     qpos = np.linspace(1, 10, 9.5e2+4)
-    for ecc in [0, .05, .1]:
-        if ecc == .05:
+    for ecc in [0, .25, .5]:
+        if ecc == .25:
             ls="dotted"
-        elif ecc == .1:
+        elif ecc == .5:
             ls="dashed"
         else:
             ls="solid"
-        chi = ecc*2
+        chi = 2.*(ecc**2)
+        print r"ecc ($e$): {:.2f}   $\chi$: {:.3f}".format(ecc, chi)
         pro1 = curvasym.g_modes_list(m, 2, qpos, ecc=ecc, chi=chi)
         pro2 = curvasym.yanai_modes(m, qpos, ecc=ecc, chi=chi)
         gpr2 = curvasym.g_modes_list(m, 1, qpos, ecc=ecc, chi=chi)
@@ -261,12 +261,12 @@ def curvasymplot_analytical(m, ecc=0., chi=0.):
 def compare_curvrmode(m):
     qneg = np.linspace(-50, -6.5, 9.5e2+4)
     rspheric = curvasym.r_modes(m, -2, qneg, ecc=0, chi=0)
-    rcurv1 = curvasym.r_modes(m, -2, qneg, ecc=.05, chi=.1)
-    rcurv2 = curvasym.r_modes(m, -2, qneg, ecc=.1, chi=.2)
+    rcurv1 = curvasym.r_modes(m, -2, qneg, ecc=.25, chi=.125)
+    rcurv2 = curvasym.r_modes(m, -2, qneg, ecc=.5, chi=.5)
     qnum = np.linspace(-50, -9.5, 250)
-#    rootfind_dimless_alt(m, -2, qnum, ecc=0., chi=0, inc=1.05)
-#    rootfind_dimless_alt(m, -2, qnum, ecc=0.05, chi=0.1, inc=1.05)
-#    rootfind_dimless_alt(m, -2, qnum, ecc=0.1, chi=0.2, inc=1.05)
+    rootfind_dimless_alt(m, -2, qnum, ecc=0., chi=0, inc=1.05)
+    rootfind_dimless_alt(m, -2, qnum, ecc=0.25, chi=0.125, inc=1.05)
+    rootfind_dimless_alt(m, -2, qnum, ecc=0.5, chi=0.5, inc=1.05)
     plt.plot(qneg, rspheric, ls='solid', color="black")
     plt.plot(qneg, rcurv1, ls='dotted', color="black")
     plt.plot(qneg, rcurv2, ls='dashed', color="black")
@@ -425,9 +425,9 @@ def rootfind_dimless(m, k, qlist, ecc=0., dlngrav=partial(grav.chi_gravity_deriv
     guesslist = getattr(asym, wavemode)(*args)
 
     qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=False, inc=inc)
-    if ecc == .05:
+    if ecc == .25:
         ls="dotted"
-    elif ecc == .1:
+    elif ecc == .5:
         ls="dashed"
     else:
         ls="solid"
@@ -440,10 +440,10 @@ def rootfind_dimless_new(mode_admin, verbose=False, inc=1.0033):
     period as well, determines the wave mode and calculates the eigenvalues
     from the asymptotically calculated values.
     """
-    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(mode_admin, verbose=False, inc=inc)  # if the mode is an argument here it can figure out how to normalize in a proper way ...
-    if mode_admin.ecc == .05:
+    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(mode_admin, verbose=verbose, inc=inc)  # if the mode is an argument here it can figure out how to normalize in a proper way ...
+    if mode_admin.ecc == .25:
         ls="dotted"
-    elif mode_admin.ecc == .1:
+    elif mode_admin.ecc == .5:
         ls="dashed"
     else:
         ls="solid"
@@ -478,73 +478,148 @@ def main():
 #    fullrange_multi_rootfind(m, qlists, kvals, aympcompare=True)  # Mostly for plotting functionality
 #    fullrange_multi_rootfind(m, [qneg], [2], aympcompare=True)  # Testing just for k=-1, negative part
 
-#    for ecc in [.0, .05, .1]:
-#        chi = ecc*2
-#        rootfind_dimless_alt(m, 2, np.linspace(-10., -1.5, 85), ecc=ecc, chi=chi, inc=1.0025)
-#        rootfind_dimless_alt(m, 1, np.linspace(-10., -1.5, 85), ecc=ecc, chi=chi, inc=1.0075)
-#        rootfind_dimless_alt(m, 0, np.linspace(-10., -1.5, 85), ecc=ecc, chi=chi, inc=1.0075)
-#        rootfind_dimless_alt(m, 2, np.linspace(10., 1.5, 85), ecc=ecc, chi=chi, inc=1.0075)
-#        rootfind_dimless_alt(m, 1, np.linspace(10., 1.5, 85), ecc=ecc, chi=chi, inc=1.0075)
-#        rootfind_dimless_alt(m, 0, np.linspace(10., 1.5, 85), ecc=ecc, chi=chi, inc=1.0015)
-#        rootfind_dimless_alt(m, -1, np.linspace(-10., -3.25, 50), ecc=ecc, chi=chi, inc=1.0075)
-#        rootfind_dimless_alt(m, -2, np.linspace(-10., -8.5, 25), ecc=ecc, chi=chi, inc=1.05)
-#    plt.yscale('log')
-#    plt.show()
+    """
+    To plot the different wavemodes all together for different eccentricities
+    """
+    for ecc in [.0, .25, .5]:
+        chi = 2 * (ecc**2)
+#        rootfind_dimless_alt(m, 2, np.linspace(-10., 0., 85), ecc=ecc, chi=chi, inc=1.0025)
+        rootfind_dimless_alt(m, 1, np.linspace(-10., 0., 85), ecc=ecc, chi=chi, inc=1.0075)
+        rootfind_dimless_alt(m, 0, np.linspace(-10., 0., 85), ecc=ecc, chi=chi, inc=1.0075)
+        rootfind_dimless_alt(m, 2, np.linspace(10., 0., 85), ecc=ecc, chi=chi, inc=1.0075)
+        rootfind_dimless_alt(m, 1, np.linspace(10., 0., 85), ecc=ecc, chi=chi, inc=1.0075)
+        rootfind_dimless_alt(m, 0, np.linspace(10., 0., 85), ecc=ecc, chi=chi, inc=1.0015)
+        rootfind_dimless_alt(m, -1, np.linspace(-10., -3.25, 50), ecc=ecc, chi=chi, inc=1.0075)
+#        rootfind_dimless_alt(m, -2, np.linspace(-50., -6.5-35*ecc, 125), ecc=ecc, chi=chi, inc=1.05)
+    plt.yscale('log')
+    plt.show()
+    exit()
 
-
-#    qlist = np.linspace(10., 1.5, 85)
+    """
+    To plot the input wavemode for different eccentrities
+    """
+#    qlist = np.linspace(-12., -10., 85)
 #    mode_admin.set_qlist(qlist)
 #    wavemode = mode_admin.get_wavemode()
 #    print mode_admin.mode, mode_admin.l, mode_admin.is_even
 
-#    for ecc in [.0, .05, .1]:
-#        chi = ecc*2
+#    for ecc in [.0, .25, .5]:
+#        chi = 2 * (ecc**2)
 #        dlngrav = partial(grav.chi_gravity_deriv, chi)
-#        mode_admin.set_curvilinear(ecc, chi, dlngrav)
-#        rootfind_dimless_new(mode_admin)
+#        mode_admin.set_curvilinear(ecc=ecc, chi=chi, dlngrav=dlngrav)
+#        rootfind_dimless_new(mode_admin, inc=1.05, verbose=True)
 #    plt.yscale('log')
 #    plt.show()
+#    exit()
 
 
-    qmin, qmax, size = -11., -9., 50
-    ecc, chi = 0.2, 0.4
-    dlngrav = partial(grav.chi_gravity_deriv, chi)
-    qlist = np.linspace(qmin, qmax, 200)
-#    asymcompare = [qlist, curvasym.g_modes_list(m, 2, qlist, ecc=ecc, chi=chi)]
-
-    filestring = "data/gridplot/qrange_{}_{}_steps_{}_kval_{}_ecc_{}_chi_{}.txt".format(qmin, qmax, size, k, ecc, chi)
-    titlestr = r"Evaluation in grid of $\lambda$ and q, for m: {}, k: {}, ecc: {}, $\chi$: {}".format(m, k, ecc, chi)
-
-    all_data = gridplot.create_grid(m, k, size, qmin, qmax, ecc, chi, dlngrav, False)
-#    all_data = gridplot.load_grid(filestring)
-    gridplot.plot_grid(all_data, title=titlestr, interpolation="spline36")  #, asymcompare=asymcompare
-
-#    qmin, qmax, lammin, lammax, size = -10., -1.5, 3., 6., 125
-#    ecc, chi = 0.0, 0.0
+    """
+    To make contour plots - either generate the data (create_grid) and plot or load
+    previously generated data (load_grid) and plot
+    """
+#    qmin, qmax, size = -10., -1.5, 100
+#    ecc = 0.
+#    chi = 2 * (ecc**2)
 #    dlngrav = partial(grav.chi_gravity_deriv, chi)
-
-#    if is_even:
-#        evenstr="Even"
-#    else:
-#        evenstr="Odd"
-#    filestring = "data/lamgrid/qrange_{}_{}_lamrange_{}_{}_steps_{}_ecc_{}_chi_{}_{}.txt".format(qmin, qmax, lammin, lammax, size, ecc, chi, evenstr)
-
-#    titlestr = r"Evaluation of grid of $\lambda$ and q, for {} modes".format(evenstr)
-#    lamdata = gridplot.lambda_grid(m, k, size, qmin, qmax, lammin, lammax, ecc, chi, dlngrav, saving=False)
-##    lamdata = gridplot.load_grid(filestring)
-#    gridplot.plot_grid(lamdata, title=titlestr, interpolation="spline36", logscale=False)
+#    filestring = "data/gridplot/qrange_{}_{}_steps_{}_kval_{}_ecc_{}_chi_{}.txt".format(qmin, qmax, size, k, ecc, chi)
+#    titlestring = r"Evaluation in grid of $\lambda$ and q, for m: {}, k: {}, ecc: {}, $\chi$: {}".format(m, k, ecc, chi)
+##    all_data = gridplot.create_grid(m, k, size, qmin, qmax, ecc, chi, dlngrav, saving=True)
+#    all_data = gridplot.load_grid(filestring)
+#    gridplot.plot_grid(all_data, title=titlestring, interpolation="spline36", logscale=True)
+#    exit()
+####
 
 
-#    compare_curvasym(m)
-#    compare_curvrmode(m)
+    """
+    To generate or load a whole set of contour plots one after another
+    """
+#    m = -2
+#    for k in [2, 1, 0]:
+#        qmin, qmax, size = 1.5, 10., 100
+#        ecc = 0.0
+#        chi = 2 * (ecc**2)
+#        dlngrav = partial(grav.chi_gravity_deriv, chi)
+#        qlist = np.linspace(qmin, qmax, 200)
+#    #    asymcompare = [qlist, curvasym.g_modes_list(m, 2, qlist, ecc=ecc, chi=chi)]
 
-#    ecc = 0.1
-#    chi = ecc*2.
+#        filestring = "data/gridplot/qrange_{}_{}_steps_{}_kval_{}_ecc_{}_chi_{}.txt".format(qmin, qmax, size, k, ecc, chi)
+#        titlestr = r"Evaluation in grid of $\lambda$ and q, for m: {}, k: {}, ecc: {}, $\chi$: {}".format(m, k, ecc, chi)
+
+##        all_data = gridplot.create_grid(m, k, size, qmin, qmax, ecc, chi, dlngrav, True)
+#        all_data = gridplot.load_grid(filestring)
+#        gridplot.plot_grid(all_data, title=titlestr, interpolation="spline36", logscale=True)  #, asymcompare=asymcompare
+#    for k in [2, 1, 0]:
+#        qmin, qmax, size = -10., -1.5, 100
+#        ecc, chi = 0., 0.
+#        dlngrav = partial(grav.chi_gravity_deriv, chi)
+#        qlist = np.linspace(qmin, qmax, 200)
+
+#        filestring = "data/gridplot/qrange_{}_{}_steps_{}_kval_{}_ecc_{}_chi_{}.txt".format(qmin, qmax, size, k, ecc, chi)
+#        titlestr = r"Evaluation in grid of $\lambda$ and q, for m: {}, k: {}, ecc: {}, $\chi$: {}".format(m, k, ecc, chi)
+
+##        all_data = gridplot.create_grid(m, k, size, qmin, qmax, ecc, chi, dlngrav, True)
+#        all_data = gridplot.load_grid(filestring)
+#        gridplot.plot_grid(all_data, title=titlestr, interpolation="spline36", logscale=True) 
+
+#    k, qmin, qmax = -1, -10., -3.25
+#    filestring = "data/gridplot/qrange_{}_{}_steps_{}_kval_{}_ecc_{}_chi_{}.txt".format(qmin, qmax, size, k, ecc, chi)
+#    titlestr = r"Evaluation in grid of $\lambda$ and q, for m: {}, k: {}, ecc: {}, $\chi$: {}".format(m, k, ecc, chi)
+##    all_data = gridplot.create_grid(m, k, size, qmin, qmax, ecc, chi, dlngrav, True)
+#    all_data = gridplot.load_grid(filestring)
+#    gridplot.plot_grid(all_data, title=titlestr, interpolation="spline36", logscale=True) 
+
+#    k, qmin, qmax = -2, -10., -6.25
+#    filestring = "data/gridplot/qrange_{}_{}_steps_{}_kval_{}_ecc_{}_chi_{}.txt".format(qmin, qmax, size, k, ecc, chi)
+#    titlestr = r"Evaluation in grid of $\lambda$ and q, for m: {}, k: {}, ecc: {}, $\chi$: {}".format(m, k, ecc, chi)
+##    all_data = gridplot.create_grid(m, k, size, qmin, qmax, ecc, chi, dlngrav, True)
+#    all_data = gridplot.load_grid(filestring)
+#    gridplot.plot_grid(all_data, title=titlestr, interpolation="spline36", logscale=True)
+
+####
+
+
+    """
+    To generate contour plots in a range of q's and lambda's, rather than from the 
+    asymptotically guessed lambda values - to search for weird things in specific
+    lambda cases. Can either generate (lambda_grid) or load (load_grid) to plot
+    """
+    qmin, qmax, lammin, lammax, size = -200., -120., -1.25, .25, 150
+    ecc = 0.4
+    chi = 2. * (ecc**2)
+    dlngrav = partial(grav.chi_gravity_deriv, chi)
+
+    if is_even:
+        evenstr="Even"
+        force_func = False
+    else:
+        evenstr="Odd"
+        force_func = True  # To force other normalization function, useful for some wavemodes
+    filestring = "data/lamgrid/m_{}/qrange_{}_{}_lamrange_{}_{}_steps_{}_ecc_{}_chi_{}_{}.txt".format(m, qmin, qmax, lammin, lammax, size, ecc, chi, evenstr)
+
+    titlestr = r"m: {}, Evaluation of grid of $\lambda$ and q, for {} modes, at ecc: {}, $\chi$: {}".format(m, evenstr, ecc, chi)
+    lamdata = gridplot.lambda_grid(m, k, size, qmin, qmax, lammin, lammax, ecc, chi, dlngrav, saving=False, force_func=force_func)
+#    lamdata = gridplot.load_grid(filestring)
+    gridplot.plot_grid(lamdata, title=titlestr, interpolation="spline36", logscale=True)
+    exit()
+
+
+    compare_curvasym(m)
+    compare_curvrmode(m)
+    """
+    To compare analytical values to numerical ones, for given eccentricity/chi
+    Note: data has to already exist!
+    """
+#    ecc = 0.0
+#    chi = 2 * (ecc**2)
 #    plotting.curvi_plotting(ecc="ecc_{}".format(ecc), chi="chi_{}".format(chi))
 #    plt.title(r"Numerics (dashed) and Analytics (solids) for ecc: {} and $\chi$: {}".format(ecc, chi))
 #    curvasymplot_analytical(m, ecc=ecc, chi=chi)
 
 
+
+    """
+    Morsink&AlGendy stuff, other old stuff
+    """
 #    r_eq, mass, period = 1.2e4, 1.6*1.9885e30, 1./581
 #    x, om_bar_sq = oblate.find_x_ombarsq(r_eq, mass, period)
 #    r_polar = r_eq*oblate.calc_radius_14_dimless(x, om_bar_sq, 0.)
@@ -553,8 +628,6 @@ def main():
 #    sigma = (r_polar / r_eq)**2
 #    Gamma = (2*om_bar_sq + 4*eps) / (1-om_bar_sq)
 #    print "sigma: {}, Gamma: {}, ecc: {}".format(sigma, Gamma, ecc)
-
-
 
 #    plotting.asymptotic_plotting(m)
 #    plotting.curvi_asymptotic_plotting(m, sigma, Gamma, ecc)

@@ -191,21 +191,22 @@ def main():
     qlists = [qneg, qpos]
     kvals = [0, 1, 2]  # l=2,3,4
 
-    ecc, chi = 0.2, 0.4
-    saving=False
-    rootfind_dimless_alt(m, 2, np.linspace(-9.5, -1.25, 17), ecc=ecc, chi=chi, saving=saving, verbose=True)
-    rootfind_dimless_alt(m, 1, np.linspace(-10., -1.25, 17), ecc=ecc, chi=chi, saving=saving, verbose=True)
-    rootfind_dimless_alt(m, 0, np.linspace(-10., -1.25, 17), ecc=ecc, chi=chi, saving=saving, verbose=True)
-    rootfind_dimless_alt(m, 2, np.linspace(10., 1.25, 17), ecc=ecc, chi=chi, saving=saving, verbose=True)
-    rootfind_dimless_alt(m, 1, np.linspace(10., 1.25, 17), ecc=ecc, chi=chi, saving=saving, verbose=True)
-    rootfind_dimless_alt(m, 0, np.linspace(10., 1.25, 17), ecc=ecc, chi=chi, saving=saving, verbose=True)
-    rootfind_dimless_alt(m, -1, np.linspace(-10., -3.5, 10), ecc=ecc, chi=chi, saving=saving, verbose=True)
-    rootfind_dimless_alt(m, -2, np.linspace(-10., -8.25, 5), ecc=ecc, chi=chi, saving=saving, inc=1.05, verbose=True)
+    ecc = 0.1
+    chi = 2 * (ecc**2)
+    saving=True
+    rootfind_dimless_alt(m, 2, np.linspace(-10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=True)
+    rootfind_dimless_alt(m, 1, np.linspace(-10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=True)
+    rootfind_dimless_alt(m, 0, np.linspace(-10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=True)
+    rootfind_dimless_alt(m, 2, np.linspace(10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=True)
+    rootfind_dimless_alt(m, 1, np.linspace(10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=True)
+    rootfind_dimless_alt(m, 0, np.linspace(10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=True)
+    rootfind_dimless_alt(m, -1, np.linspace(-10., -3.5, 100), ecc=ecc, chi=chi, saving=saving, verbose=True)
+    rootfind_dimless_alt(m, -2, np.linspace(-10., -8.25, 50), ecc=ecc, chi=chi, saving=saving, inc=1.05, verbose=True)
     plt.yscale('log')
     plt.show()
 
 #    for ecc in [0., 0.05, 0.1]:
-#        chi = ecc*2.
+#        chi = 2 * (ecc**2)
 #        rootfind_dimless_alt(m, 0, np.linspace(100, 1.25, 500), ecc=ecc, chi=chi)
 #    plt.yscale('log')
 #    plt.show()

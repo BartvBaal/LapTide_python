@@ -212,7 +212,7 @@ def eccentricity_compare(m, k, s, q, ecclist, chilist, gravfunc):
     plt.show()
 
 
-def eccentricity_movie(m, k, s, q, eccstart, eccend, frames, gravfunc):
+def eccentricity_movie(m, k, s, q, eccstart, eccend, frames, gravfunc, fixframe=False, moviesaving=False):
     """
     Creates a movie at a set m, k and q for "frames" steps between eccstart and eccend.
     Will assume chi = 2*ecc
@@ -221,25 +221,30 @@ def eccentricity_movie(m, k, s, q, eccstart, eccend, frames, gravfunc):
 
     mode_admin = Property.Mode_admin(m, k)
     mode_admin.set_qlist(np.asarray([q]))
+    direc = mode_admin.get_direction()
+    mode = mode_admin.get_wavemode(direc)
     ecclist = np.linspace(eccstart, eccend, frames)
+    subdir = "data/moviedata/{}_{}_{}_{}_{}_{}_{}".format(str(m), str(k), str(s), str(q), str(eccstart), str(eccend), str(frames))
 
     fig = plt.figure()
     ax1 = fig.add_subplot(3, 1, 1)
     ax2 = fig.add_subplot(3, 1, 2)
     ax3 = fig.add_subplot(3, 1, 3)
+    mu = np.linspace(1., 0., N)
+    if fixframe:
+        savestring = subdir + "/{}_{}_{}".format(0.0, 0.0, str(gravfunc.__name__))
+        data = np.loadtxt(savestring)
+        num_hough_init, num_houghHat_init, num_houghTilde_init = data
+        ax1lim = [min(num_hough_init)*1.1, max(num_hough_init)*1.2]
+        ax2lim = [min(num_houghHat_init)*1.1, max(num_houghHat_init)*1.2]
+        ax3lim = [min(num_houghTilde_init)*1.1, max(num_houghTilde_init)*1.2]
 
     def update(i):
-        blockprint()
         ecc = ecclist[i]
         chi = ecc*2.
-        dlngrav = partial(gravfunc, chi)
-        mode_admin.set_curvilinear(ecc, chi, dlngrav)
-        lam, wavename, direc = rootfind_dimless(mode_admin, verbose=False, inc=1.075)[1:]
-
-        mu = np.linspace(1., 0., N)
-        sigma = np.sqrt(1-(ecc*(1-mu**2)))
-        num_hough, num_houghHat = numerics(Curvilinear, [mode_admin, q], lam, N)
-        num_houghTilde = -m * num_hough - q*mu/sigma * num_houghHat
+        savestring = subdir + "/{}_{}_{}".format(str(ecc), str(chi), str(gravfunc.__name__))
+        data = np.loadtxt(savestring)
+        num_hough, num_houghHat, num_houghTilde = data
 
         # Clear the subplots
         ax1.cla()
@@ -253,21 +258,62 @@ def eccentricity_movie(m, k, s, q, eccstart, eccend, frames, gravfunc):
         ax2.set_ylabel(r"$\hat\Theta(\sigma)$")
         ax3.set_ylabel(r"$\tilde\Theta(\sigma)$")
         ax3.set_xlabel(r"$\mu \equiv \cos(\theta)$")
+        if fixframe:
+            ax1.plot(mu, num_hough_init, ls="--", label="Spherical")
+            ax2.plot(mu, num_houghHat_init, ls="--")
+            ax3.plot(mu, num_houghTilde_init, ls="--")
+            ax1.set_ylim(ax1lim)
+            ax2.set_ylim(ax2lim)
+            ax3.set_ylim(ax3lim)
 
-        ax1.set_title("m: {}, k: {}, s: {}, q: {}  ({}grade {}), ecc: {}, $\chi$: {}".format(m, k, s, q, direc, wavename, ecc, chi))
-        ax1.plot(mu, num_hough)
+        ax1.set_title("m: {}, k: {}, s: {}, q: {}  ({}grade {}), ecc: {:.4f}, $\chi$: {:.4f}".format(m, k, s, q, direc, mode, ecc, chi))
+        ax1.plot(mu, num_hough, label="Curvilinear")
         ax2.plot(mu, num_houghHat)
         ax3.plot(mu, num_houghTilde)
-        enableprint()
+        ax1.legend()
 
     
     # Set up formatting for the movie files
     Writer = animation.writers['ffmpeg']
-    writer = Writer(fps=60, metadata=dict(artist='Bart'), bitrate=750)
+    writer = Writer(fps=30, metadata=dict(artist='Bart'), bitrate=750)
 
-    ani = animation.FuncAnimation(fig, update, frames=frames, interval=1, repeat=False)
-    plt.show()
+    ani = animation.FuncAnimation(fig, update, frames=frames, interval=20, repeat=False)
+    if moviesaving:
+        tardir = "data/movies/{}_{}".format(str(direc), mode.replace(" ", "_"))
+        if not os.path.exists(tardir):
+            os.makedirs(tardir)
+        name = "/{}_{}_{}_{}_{}_{}".format(str(eccstart), str(eccend), str(frames), str(m), str(k), str(q))
+        print "Saving file to: {}.mp4".format(tardir+name)
+        ani.save(tardir+"{}.mp4".format(name), writer=writer)
+    else:
+        plt.show()
 
+
+def create_data(m, k, s, q, eccstart, eccend, frames, gravfunc):
+    N = 125
+
+    mode_admin = Property.Mode_admin(m, k)
+    mode_admin.set_qlist(np.asarray([q]))
+    ecclist = np.linspace(eccstart, eccend, frames)
+    subdir = "data/moviedata/{}_{}_{}_{}_{}_{}_{}".format(str(m), str(k), str(s), str(q), str(eccstart), str(eccend), str(frames))
+    if not os.path.exists(subdir):
+        os.makedirs(subdir)
+
+    for i in range(len(ecclist)):
+        ecc = ecclist[i]  # This way its ensured you read out the files in the proper order!
+        chi = ecc*2.
+        dlngrav = partial(gravfunc, chi)
+        mode_admin.set_curvilinear(ecc, chi, dlngrav)
+        lam, wavename, direc = rootfind_dimless(mode_admin, verbose=False, inc=1.075)[1:]
+
+        mu = np.linspace(1., 0., N)
+        sigma = np.sqrt(1-(ecc*(1-mu**2)))
+        num_hough, num_houghHat = numerics(Curvilinear, [mode_admin, q], lam, N)
+        num_houghTilde = -m * num_hough - q*mu/sigma * num_houghHat
+
+        data = np.asarray([num_hough, num_houghHat, num_houghTilde])
+        savestring = subdir + "/{}_{}_{}".format(str(ecc), str(chi), str(gravfunc.__name__))
+        np.savetxt(savestring, data)
 
 
 if __name__ == "__main__":
@@ -277,8 +323,8 @@ if __name__ == "__main__":
 #    m, k, s, q = 2, 0, 1, 3  # Retro g mode
 #    m, k, s, q = -2, 1, 0, 3  # Pro Yanai
 #    m, k, s, q = 2, -1, 0, 6  # Retro Yanai
-#    m, k, s, q = 2, -2, 1, 17.5  # Retro r mode
-    m, k, s, q = -2, 0, -1, 3  # Kelvin check - this should use different functions!
+    m, k, s, q = 2, -2, 1, 30  # Retro r mode
+#    m, k, s, q = -2, 0, -1, 3  # Kelvin check - this should use different functions!
 #    m, k, s, q = -2, 0, -1, 10  # LeeSaio1997 check - these do not require new functions ?
 
     ecc = 0.
@@ -299,11 +345,12 @@ if __name__ == "__main__":
 #    for m, k, s, q in zip(mlist, klist, slist, qlist):
 #        make_houghs(m, k, s, q, ecc, chi, gravfunc)
 
-    ## TODO: update the animator to first create the data, then show it, since it takes too long to generate the data to do a nice, fast movie where you actually  see the lines shift
-    m, k, s, q = 2, -2, 1, 16.
-    eccstart, eccend, frames = 0., .2, 150
+#    m, k, s, q = 2, -2, 1, 16.
+#    m, k, s, q = 2, 2, 3, 3
+    eccstart, eccend, frames = 0., .325, 500
     gravfunc = grav.chi_gravity_deriv
-    eccentricity_movie(m, k, s, q, eccstart, eccend, frames, gravfunc)
+#    create_data(m, k, s, q, eccstart, eccend, frames, gravfunc)
+    eccentricity_movie(m, k, s, q, eccstart, eccend, frames, gravfunc, fixframe=True, moviesaving=False)
 
 
 

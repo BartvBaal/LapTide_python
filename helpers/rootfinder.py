@@ -208,11 +208,12 @@ def multi_rootfind_fromguess_dimless(mode_admin, verbose=False, inc=1.0033):
     found_lamlist = np.zeros(len(mode_admin.qlist))
     fn = Curvilinear.solver_t_dimless(mode_admin, mode_admin.qlist[0])
     straddle = Straddle.straddle_t(fn, inc, N_steps)
+    root = guesslist[0]
 
     for i in range(len(mode_admin.qlist)):
         q = mode_admin.qlist[i]
         fn.set_q(q)
-        bisec = straddle.search_log(guesslist[i], verbose=verbose, neg_allowed=neg_allowed)
+        bisec = straddle.search_log(root, verbose=verbose, neg_allowed=neg_allowed)
         root = rootfinder_curvi_dimless(mode_admin, q, bisec)[0]
 
         found_lamlist[i] = root

@@ -1,6 +1,6 @@
 import numpy as np
 
-def r_modes(m, k, q, ecc=0, chi=0):
+def r_modes(m, k, q, ecc=0., chi=0.):
     """
     First validates if the given parameters can create an r-mode wave.
     Returns the second order approximation.
@@ -22,6 +22,7 @@ def r_modes(m, k, q, ecc=0, chi=0):
         raise TypeError("Input parameters m and k should be given as integers")
     if k > m:  # Not sure on this constraint yet
         raise ValueError("Invalid parameter; k has to be lower than m")
+    ecc = ecc**2.  # Mistakenly used e^2 as eccentricity, instead of just e
     sigma = np.sqrt(1.-ecc)
     sigsq = sigma**2
     s = -k-1
@@ -53,8 +54,8 @@ def r_modes(m, k, q, ecc=0, chi=0):
 
     n1 = (m*q - m*m*sigsq)**2 - (m*q - m*m*sigsq)*(5.*chi + eccdivsigsq/2.) + chi*(6.*chi + eccdivsigsq)
     d1 = q*q * (2.*s + 1)**2
-#    so = -m*eccdivsigsq/q + 2.*chi*m/q + 2.*chi*eccdivsigsq / (q*q)
-#    to = 4*sigsq*sigsq/(q*q) * (2.*chi/sigsq + eccdivsigsq**2)**2
+    so = -m*eccdivsigsq/q + 2.*chi*m/q + 2.*chi*eccdivsigsq / (q*q)
+    to = -4*sigsq*sigsq/(q*q) * (2.*chi/sigsq + eccdivsigsq**2)**2
     approx = n1/d1 #+ so + to
     return approx
 
@@ -73,6 +74,7 @@ def g_modes(m, k, q, ecc=0, chi=0):
         s = k - 1.
     else:  # retrograde
         s = k + 1.
+    ecc = ecc**2.  # Mistakenly used e^2 as eccentricity, instead of just e
     sigma = np.sqrt(1.-ecc)
     sigsq = sigma**2
     eccdivsigsq = ecc / (sigsq)

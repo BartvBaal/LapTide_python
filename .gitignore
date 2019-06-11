@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 *~
 *.pyc
+data/moviedata/*
 
 # C extensions
 *.so

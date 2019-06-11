@@ -41,9 +41,9 @@ class Mode_admin:
 
     def check_is_even(self):
         """
-        Check if m+k is even (True) or odd (False)
+        Check if m+l is even (True) or odd (False)
         """
-        if (self.m + self.k) % 2 == 0:
+        if (self.m + self.l) % 2 == 0:
             return True
         return False
 

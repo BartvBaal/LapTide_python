@@ -131,12 +131,13 @@ def simple_numasyplot(m):
     plt.title("Asymptotic 1st and 2nd order compared with numerical solutions, m=-2")
     plt.xlabel(r"Spin parameter q = $2\Omega/\omega$")
     plt.ylabel(r"Eigenvalue $\lambda$")
-#    plt.text(-4.25, 1000, "g-mode", fontsize=21)
-#    plt.text(-4.75, 310, "g-mode", fontsize=21)
-#    plt.text(-4.75, 95, "g-mode", fontsize=21)
-#    plt.text(3.75, 220, "g-mode", fontsize=21)
-#    plt.text(4., 28, "y-mode", fontsize=21)
-#    plt.text(4, 4.5, "k-mode", fontsize=21)
+    plt.text(-4.25, 1000, "g-mode", fontsize=21)
+    plt.text(-4.75, 310, "g-mode", fontsize=21)
+    plt.text(-4.75, 102, "g-mode", fontsize=21)
+    plt.text(3.75, 220, "g-mode", fontsize=21)
+    plt.text(4., 28, "y-mode", fontsize=21)
+    plt.text(4, 4.5, "k-mode", fontsize=21)
+    plt.text(-4.75, 8.25, "y-mode", fontsize=21)
 #    plt.legend(handles=custom_lines, fontsize=24, frameon=True, fancybox=True, edgecolor="#000000", loc='upper right', bbox_to_anchor=(1, 1))
 #    plt.savefig("TEST.png")
     plt.show()
@@ -475,25 +476,41 @@ def main():
     qlists = [qneg, qpos]
     kvals = [0, 1, 2]  # l=2,3,4
 
+#    plotting.plot_burstdistro()
+#    exit()
+
 #    fullrange_multi_rootfind(m, qlists, kvals, aympcompare=True)  # Mostly for plotting functionality
 #    fullrange_multi_rootfind(m, [qneg], [2], aympcompare=True)  # Testing just for k=-1, negative part
 
     """
     To plot the different wavemodes all together for different eccentricities
     """
-    for ecc in [.0, .25, .5]:
-        chi = 2 * (ecc**2)
+#    for ecc in [.0, .25, .5]:
+#        chi = 2 * (ecc**2)
 #        rootfind_dimless_alt(m, 2, np.linspace(-10., 0., 85), ecc=ecc, chi=chi, inc=1.0025)
-        rootfind_dimless_alt(m, 1, np.linspace(-10., 0., 85), ecc=ecc, chi=chi, inc=1.0075)
-        rootfind_dimless_alt(m, 0, np.linspace(-10., 0., 85), ecc=ecc, chi=chi, inc=1.0075)
-        rootfind_dimless_alt(m, 2, np.linspace(10., 0., 85), ecc=ecc, chi=chi, inc=1.0075)
-        rootfind_dimless_alt(m, 1, np.linspace(10., 0., 85), ecc=ecc, chi=chi, inc=1.0075)
-        rootfind_dimless_alt(m, 0, np.linspace(10., 0., 85), ecc=ecc, chi=chi, inc=1.0015)
-        rootfind_dimless_alt(m, -1, np.linspace(-10., -3.25, 50), ecc=ecc, chi=chi, inc=1.0075)
-#        rootfind_dimless_alt(m, -2, np.linspace(-50., -6.5-35*ecc, 125), ecc=ecc, chi=chi, inc=1.05)
-    plt.yscale('log')
-    plt.show()
-    exit()
+#        rootfind_dimless_alt(m, 1, np.linspace(-10., 0., 85), ecc=ecc, chi=chi, inc=1.0075)
+#        rootfind_dimless_alt(m, 0, np.linspace(-10., 0., 85), ecc=ecc, chi=chi, inc=1.0075)
+#        rootfind_dimless_alt(m, 2, np.linspace(10., 0., 85), ecc=ecc, chi=chi, inc=1.0075)
+#        rootfind_dimless_alt(m, 1, np.linspace(10., 0., 85), ecc=ecc, chi=chi, inc=1.0075)
+#        rootfind_dimless_alt(m, 0, np.linspace(10., 0., 85), ecc=ecc, chi=chi, inc=1.0015)
+#        rootfind_dimless_alt(m, -1, np.linspace(-10., -3.25, 50), ecc=ecc, chi=chi, inc=1.0075)
+#        rootfind_dimless_alt(m, -2, np.linspace(-50., -6.5, 150), ecc=ecc, chi=chi, inc=1.05)
+#    plt.yscale('log')
+#    plt.show()
+#    exit()
+
+#    eccstart = 0.
+#    eccend = .6
+#    steps = 18
+#    stepsize = (eccend-eccstart)/(steps-1)
+#    for ecc in [.0, .2, .3, .375, .415, .435, .45, .46, .5, .55]:  # np.linspace(eccstart, eccend, steps)
+#        chi = 2. * (ecc**2)  # 2 * (ecc**2)
+#        print "\n\n\t\tecc: {:.3f}, chi: {:.3f}\n\n".format(ecc, chi)
+#        rootfind_dimless_alt(m, -2, np.linspace(-350., -3., 600), ecc=ecc, chi=chi, inc=1.05)
+#    plt.yscale('log')
+#    plt.title("m: {}; Eigenvalue evolution for different ecc, from {} to {} ({} inc/step)".format(m, eccstart, eccend, stepsize))
+#    plt.show()
+#    exit()
 
     """
     To plot the input wavemode for different eccentrities
@@ -583,8 +600,8 @@ def main():
     asymptotically guessed lambda values - to search for weird things in specific
     lambda cases. Can either generate (lambda_grid) or load (load_grid) to plot
     """
-    qmin, qmax, lammin, lammax, size = -200., -120., -1.25, .25, 150
-    ecc = 0.4
+    qmin, qmax, lammin, lammax, size = -400., -100., -1.2, .2, 500
+    ecc = 0.5
     chi = 2. * (ecc**2)
     dlngrav = partial(grav.chi_gravity_deriv, chi)
 

@@ -9,8 +9,8 @@ def AM14_gravity_deriv(r_eq, mass, period, mu):
     """
     x, om_bar_sq = oblate.find_x_ombarsq(r_eq, mass, period)
     factor = oblate.calc_radius_14_dimless(x, om_bar_sq, 0)
-    ecc = 1-(factor**2)
-    gamma = calc_gamma(om_bar_sq, ecc)
+    ell = 1-(factor)
+    gamma = calc_gamma(om_bar_sq, ell)
 
     top = 2.*gamma*mu
     bot = 2. + mu*mu*gamma
@@ -27,5 +27,5 @@ def chi_gravity_deriv(chi, mu):
     return top/bot
 
 
-def calc_gamma(om_bar_sq, ecc):
-    return (2*om_bar_sq + 4*ecc) / (1-om_bar_sq)
+def calc_gamma(om_bar_sq, ell):
+    return (2*om_bar_sq + 4*ell) / (1-om_bar_sq)

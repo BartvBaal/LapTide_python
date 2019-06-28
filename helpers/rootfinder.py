@@ -179,7 +179,7 @@ def multi_rootfind_curvilinear(m, k, qlist, is_even, r_eq, mass, period):
 
 
 #def multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=False, inc=1.0033):
-def multi_rootfind_fromguess_dimless(mode_admin, verbose=False, inc=1.0033):
+def multi_rootfind_fromguess_dimless(mode_admin, verbose=False, inc=1.0033, rsearch=True):
 #    m = mode_admin.m
 #    is_even = mode_admin.is_even
 #    qlist = mode_admin.qlist
@@ -201,6 +201,8 @@ def multi_rootfind_fromguess_dimless(mode_admin, verbose=False, inc=1.0033):
         args = mode_admin.m, mode_admin.k, mode_admin.qlist, mode_admin.ecc, mode_admin.chi
     guesslist = getattr(curvasym, wavemode)(*args)
     mode_admin.guess = guesslist  # Might need this later after rootfinding so store it
+    if wavemode[0] == "r" and rsearch:
+        return rmode_rootfinder(mode_admin, verbose, inc)
 
     neg_allowed = True
     inc = inc
@@ -221,3 +223,46 @@ def multi_rootfind_fromguess_dimless(mode_admin, verbose=False, inc=1.0033):
 
     return mode_admin.qlist, found_lamlist
 
+
+## TODO: write separate rootfinder for r-modes which just traces back until the r-mode disppears and gives you a warning if it cannot find the starting point
+def rmode_rootfinder(mode_admin, verbose, inc):
+    """
+    Separate r-mode rootfinder which is called by the general rootfinder if it
+    identifies the wavemode as r-mode though the m&k values. Follows the same
+    plan as the other general wavemodes but just runs until either all q values
+    have been matched to an eigenvalue or until the eigenvalues become too small
+    and the drop into negative has been found.
+    Will give a special shoutout warning if it doesn't find *any* solutions
+    """
+    neg_allowed = True
+    inc = inc
+    N_steps = 250
+    found_lamlist = np.zeros(len(mode_admin.qlist))
+    fn = Curvilinear.solver_t_dimless(mode_admin, mode_admin.qlist[0])
+    straddle = Straddle.straddle_t(fn, inc, N_steps)
+    root = mode_admin.guess[0]
+    maxlen = len(mode_admin.qlist)
+    i = 0
+
+    while i < maxlen:
+        try:
+            q = mode_admin.qlist[i]
+            fn.set_q(q)
+            bisec = straddle.search_log(root, verbose=verbose, neg_allowed=neg_allowed)
+            root = rootfinder_curvi_dimless(mode_admin, q, bisec)[0]
+
+            found_lamlist[i] = root
+            if root > 5.*mode_admin.guess[i] and i != 1:  # Validate against jumping
+                print "random jump happened, excluding"
+                break
+            print q, root, bisec
+            i += 1
+        except:
+            if i == 0:
+                Property.warnings.warn("Did not find a single solution; system might be too eccentric!", Property.InputWarning)
+                return [], []
+            break
+
+    mode_admin.qlist = mode_admin.qlist[:i]
+    found_lamlist = found_lamlist[:i]
+    return mode_admin.qlist, found_lamlist

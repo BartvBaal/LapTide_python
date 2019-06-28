@@ -135,7 +135,7 @@ def rootfind_dimless(m, k, qlist, ecc=0., dlngrav=partial(grav.chi_gravity_deriv
         args = m, k, qlist
     guesslist = getattr(asym, wavemode)(*args)
 
-    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=False, inc=inc)
+    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=verbose, inc=inc)
     plt.plot(qlist, found_lamlist)
 
 
@@ -150,16 +150,16 @@ def rootfind_dimless_alt(m, k, qlist, ecc=0., chi=0., gravfunc=grav.chi_gravity_
     mode_admin.set_qlist(qlist)
     mode_admin.set_curvilinear(ecc, chi, dlngrav)
 
-    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(mode_admin, verbose=False, inc=inc)
+    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(mode_admin, verbose=verbose, inc=inc)
 #    roots.multi_rootfind_fromguess_dimless(m, qlist, is_even, guesslist, ecc, dlngrav, verbose=verbose, inc=inc)
     if saving:
         savestring = "data/Curvilinear/range_{}_{}_steps_{}_kval_{}_ecc_{}_chi_{}.txt"\
                                     .format(qlist[0],qlist[-1],len(qlist),str(k), str(ecc), str(chi))
         print "\nSaving to: {}\n\n".format(savestring)
         np.savetxt(savestring, found_lamlist)
-    if ecc == .05:
+    if ecc == .25:
         ls="dotted"
-    elif ecc == .1:
+    elif ecc == .5:
         ls="dashed"
     else:
         ls="solid"
@@ -191,17 +191,19 @@ def main():
     qlists = [qneg, qpos]
     kvals = [0, 1, 2]  # l=2,3,4
 
-    ecc = 0.1
+    ecc = 0.0  # do in ecc=0, ecc=.25 and ecc=.5
+#    for ecc in [0., .25, .5]:
     chi = 2 * (ecc**2)
     saving=True
-    rootfind_dimless_alt(m, 2, np.linspace(-10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=True)
-    rootfind_dimless_alt(m, 1, np.linspace(-10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=True)
-    rootfind_dimless_alt(m, 0, np.linspace(-10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=True)
-    rootfind_dimless_alt(m, 2, np.linspace(10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=True)
-    rootfind_dimless_alt(m, 1, np.linspace(10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=True)
-    rootfind_dimless_alt(m, 0, np.linspace(10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=True)
-    rootfind_dimless_alt(m, -1, np.linspace(-10., -3.5, 100), ecc=ecc, chi=chi, saving=saving, verbose=True)
-    rootfind_dimless_alt(m, -2, np.linspace(-10., -8.25, 50), ecc=ecc, chi=chi, saving=saving, inc=1.05, verbose=True)
+    verbose=False
+    rootfind_dimless_alt(m, 2, np.linspace(-10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=verbose)
+    rootfind_dimless_alt(m, 1, np.linspace(-10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=verbose)
+    rootfind_dimless_alt(m, 0, np.linspace(-10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=verbose)
+    rootfind_dimless_alt(m, 2, np.linspace(10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=verbose)
+    rootfind_dimless_alt(m, 1, np.linspace(10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=verbose)
+    rootfind_dimless_alt(m, 0, np.linspace(10., 0., 170), ecc=ecc, chi=chi, saving=saving, verbose=verbose)
+    rootfind_dimless_alt(m, -1, np.linspace(-10., -3.5, 100), ecc=ecc, chi=chi, saving=saving, verbose=verbose)
+    rootfind_dimless_alt(m, -2, np.linspace(-10., -8.25, 50), ecc=ecc, chi=chi, saving=saving, inc=1.05, verbose=verbose)
     plt.yscale('log')
     plt.show()
 
@@ -261,6 +263,7 @@ def main():
     #TODO: need to fix the initial guess for higher spins
     # For 363/581 Hz the initial guess doesn't stradle a root!
 
+#    fullrange_multi_rootfind(m, [-1], [np.linspace(-3.5, -10., 750)], aympcompare=False, saving=True)
 #    fullrange_multi_rootfind(m, kvals, qlists, aympcompare=True)  # Mostly for plotting functionality
 #    fullrange_multi_rootfind(m, [-2], [qneg], aympcompare=True)  # Testing just for k=-2, negative part
 

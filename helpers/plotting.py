@@ -151,7 +151,8 @@ def townsend_plotting():
     "data/Townsend2003/range_0.0_10.0_steps_952_kval_2.txt", 
     "data/Townsend2003/range_0.0_-10.0_steps_951_kval_0.txt", 
     "data/Townsend2003/range_0.0_-10.0_steps_951_kval_1.txt", 
-    "data/Townsend2003/range_0.0_-10.0_steps_951_kval_2.txt"]
+    "data/Townsend2003/range_0.0_-10.0_steps_951_kval_2.txt",
+    "data/Townsend2003/range_-3.5_-10.0_steps_750_kval_-1.txt"]
     numerics_plotting(plotlist)
 
 
@@ -163,4 +164,15 @@ def curvi_plotting(ecc="ecc_0.0", chi="chi_0.0"):
             plotlist.append("data/Curvilinear/"+filename)
     numerics_plotting(plotlist)
 
+
+def plot_burstdistro():
+    persistant_pulsars = [401., 401., 314., 254., 245., 11.]
+    intermittent_pulsars = [550., 377.]
+    undetected_as_pulsars = [620., 601., 589., 581., 567., 552., 532., 524., 363., 329., 294.]
+    plt.hist([persistant_pulsars, intermittent_pulsars, undetected_as_pulsars], bins=np.linspace(0, 650, 27), histtype='barstacked', label=["Persistant pulsars", "Intermittent pulsars", "Not detected as pulsar"])
+    plt.xlabel("Burst Oscillation Frequency (Hz)")
+    plt.ylabel("Amount of sources")
+    plt.xlim([0., 625])
+    plt.legend(fontsize=22, frameon=True, fancybox=True, edgecolor="#660000")
+    plt.show()
 

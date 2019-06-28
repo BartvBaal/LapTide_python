@@ -23,13 +23,13 @@ def enableprint():
     sys.stdout = sys.__stdout__
 
 
-def rootfind_dimless(mode_admin, verbose=False, inc=1.0033):
+def rootfind_dimless(mode_admin, verbose=False, inc=1.0033, rsearch=False):
     """
     For a given m, k and qlist, and potentially for different radius, mass and
     period as well, determines the wave mode and calculates the eigenvalues
     from the asymptotically calculated values.
     """
-    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(mode_admin, verbose=False, inc=inc)
+    qlist, found_lamlist = roots.multi_rootfind_fromguess_dimless(mode_admin, verbose=False, inc=inc, rsearch=rsearch)
     return mode_admin.guess, found_lamlist, mode_admin.mode.split("_")[0], mode_admin.direction
 
 
@@ -115,7 +115,7 @@ def make_houghs(m, k, s, q, ecc, chi, gravfunc):
     mode_admin.set_qlist(np.asarray([q]))
     mode_admin.set_curvilinear(ecc, chi, dlngrav)
 
-    guess, lam, wavename, direc = rootfind_dimless(mode_admin, verbose=False, inc=1.075)
+    guess, lam, wavename, direc = rootfind_dimless(mode_admin, verbose=False, inc=1.075, rsearch=False)
     mu = np.linspace(1., 0., N)
     L = lam**.5
     Lnu = L * q  # it should just be q but that breaks if q is negative?
@@ -191,9 +191,9 @@ def eccentricity_compare(m, k, s, q, ecclist, chilist, gravfunc):
     for ecc, chi in zip(ecclist, chilist):
         dlngrav=partial(gravfunc, chi)
         mode_admin.set_curvilinear(ecc, chi, dlngrav)
-        guess, lam, wavename, direc = rootfind_dimless(mode_admin, verbose=False, inc=1.075)
+        guess, lam, wavename, direc = rootfind_dimless(mode_admin, verbose=False, inc=1.075, rsearch=False)
         mu = np.linspace(1., 0., N)
-        sigma = np.sqrt(1-(ecc*(1-mu**2)))
+        sigma = np.sqrt(1-((ecc**2.)*(1-mu**2)))
 
         # Numeric values
         is_even = Curvilinear.check_is_even(m, k)
@@ -212,10 +212,10 @@ def eccentricity_compare(m, k, s, q, ecclist, chilist, gravfunc):
     plt.show()
 
 
-def eccentricity_movie(m, k, s, q, eccstart, eccend, frames, gravfunc, fixframe=False, moviesaving=False):
+def eccentricity_movie(m, k, s, q, eccstart, eccend, frames, gravfunc, fixframe=False, moviesaving=False, town_normalize=False):
     """
     Creates a movie at a set m, k and q for "frames" steps between eccstart and eccend.
-    Will assume chi = 2*ecc
+    Will assume chi = 2*(ecc**2)
     """
     N = 125
 
@@ -224,7 +224,7 @@ def eccentricity_movie(m, k, s, q, eccstart, eccend, frames, gravfunc, fixframe=
     direc = mode_admin.get_direction()
     mode = mode_admin.get_wavemode(direc)
     ecclist = np.linspace(eccstart, eccend, frames)
-    subdir = "data/moviedata/{}_{}_{}_{}_{}_{}_{}".format(str(m), str(k), str(s), str(q), str(eccstart), str(eccend), str(frames))
+    subdir = "data/moviedata/{}_{}_{}_{}_{}_{}_{}_{}".format(str(m), str(k), str(s), str(q), str(eccstart), str(eccend), str(frames), str(town_normalize))
 
     fig = plt.figure()
     ax1 = fig.add_subplot(3, 1, 1)
@@ -241,7 +241,7 @@ def eccentricity_movie(m, k, s, q, eccstart, eccend, frames, gravfunc, fixframe=
 
     def update(i):
         ecc = ecclist[i]
-        chi = ecc*2.
+        chi = 2. * (ecc**2.)
         savestring = subdir + "/{}_{}_{}".format(str(ecc), str(chi), str(gravfunc.__name__))
         data = np.loadtxt(savestring)
         num_hough, num_houghHat, num_houghTilde = data
@@ -282,34 +282,37 @@ def eccentricity_movie(m, k, s, q, eccstart, eccend, frames, gravfunc, fixframe=
         tardir = "data/movies/{}_{}".format(str(direc), mode.replace(" ", "_"))
         if not os.path.exists(tardir):
             os.makedirs(tardir)
-        name = "/{}_{}_{}_{}_{}_{}".format(str(eccstart), str(eccend), str(frames), str(m), str(k), str(q))
+        name = "/{}_{}_{}_{}_{}_{}_{}".format(str(eccstart), str(eccend), str(frames), str(m), str(k), str(q), str(town_normalize))
         print "Saving file to: {}.mp4".format(tardir+name)
         ani.save(tardir+"{}.mp4".format(name), writer=writer)
     else:
         plt.show()
 
 
-def create_data(m, k, s, q, eccstart, eccend, frames, gravfunc):
+def create_data(m, k, s, q, eccstart, eccend, frames, gravfunc, town_normalize=False):
     N = 125
 
     mode_admin = Property.Mode_admin(m, k)
     mode_admin.set_qlist(np.asarray([q]))
     ecclist = np.linspace(eccstart, eccend, frames)
-    subdir = "data/moviedata/{}_{}_{}_{}_{}_{}_{}".format(str(m), str(k), str(s), str(q), str(eccstart), str(eccend), str(frames))
+    subdir = "data/moviedata/{}_{}_{}_{}_{}_{}_{}_{}".format(str(m), str(k), str(s), str(q), str(eccstart), str(eccend), str(frames), str(town_normalize))
     if not os.path.exists(subdir):
         os.makedirs(subdir)
 
     for i in range(len(ecclist)):
         ecc = ecclist[i]  # This way its ensured you read out the files in the proper order!
-        chi = ecc*2.
+        chi = 2. * (ecc**2.)
         dlngrav = partial(gravfunc, chi)
         mode_admin.set_curvilinear(ecc, chi, dlngrav)
-        lam, wavename, direc = rootfind_dimless(mode_admin, verbose=False, inc=1.075)[1:]
+        lam, wavename, direc = rootfind_dimless(mode_admin, verbose=False, inc=1.075, rsearch=False)[1:]
 
         mu = np.linspace(1., 0., N)
-        sigma = np.sqrt(1-(ecc*(1-mu**2)))
+        sigma = np.sqrt(1-((ecc**2.)*(1-mu**2)))
         num_hough, num_houghHat = numerics(Curvilinear, [mode_admin, q], lam, N)
         num_houghTilde = -m * num_hough - q*mu/sigma * num_houghHat
+
+        if town_normalize:
+            num_hough, num_hougHat, num_houghTilde = townsendify(num_hough, num_houghHat, num_houghTilde, k, m)
 
         data = np.asarray([num_hough, num_houghHat, num_houghTilde])
         savestring = subdir + "/{}_{}_{}".format(str(ecc), str(chi), str(gravfunc.__name__))
@@ -328,11 +331,11 @@ if __name__ == "__main__":
 #    m, k, s, q = -2, 0, -1, 10  # LeeSaio1997 check - these do not require new functions ?
 
     ecc = 0.
-    chi = 0.
+    chi = 2. * (ecc**2)
 #    make_houghs(m, k, s, q, ecc, chi, grav.chi_gravity_deriv)
 
-    ecclist = [0., 0.05, .1, .15, .25]
-    chilist = [0., .1, .2, .3, .5]
+    ecclist = np.asarray([0., 0.05, .1, .15, .25])
+    chilist = 2. * (ecclist**2)
 #    eccentricity_compare(m, k, s, q, ecclist, chilist, grav.chi_gravity_deriv)
 
     # To reproduce the Townsend plots 
@@ -347,10 +350,12 @@ if __name__ == "__main__":
 
 #    m, k, s, q = 2, -2, 1, 16.
 #    m, k, s, q = 2, 2, 3, 3
-    eccstart, eccend, frames = 0., .325, 500
+    m, k, s, q = 1, -2, 1, 400  # realistic r-mode since m=1
+    eccstart, eccend, frames = 0., .5, 500
     gravfunc = grav.chi_gravity_deriv
-#    create_data(m, k, s, q, eccstart, eccend, frames, gravfunc)
-    eccentricity_movie(m, k, s, q, eccstart, eccend, frames, gravfunc, fixframe=True, moviesaving=False)
+    town_normalize = True  # To use townsend's normalization setup
+#    create_data(m, k, s, q, eccstart, eccend, frames, gravfunc, town_normalize=town_normalize)
+    eccentricity_movie(m, k, s, q, eccstart, eccend, frames, gravfunc, fixframe=True, moviesaving=False, town_normalize=town_normalize)
 
 
 

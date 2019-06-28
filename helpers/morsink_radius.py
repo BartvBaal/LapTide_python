@@ -89,6 +89,28 @@ def calc_grav_14_slow_dimless(x, om_bar_sq, angle):
     return factor
 
 
+def calc_grav_14_fast_dimless(x, om_bar_sq, angle):
+    ce0 = -.791
+    ce1 = .776 * x
+    cp0 = 1.138
+    cp1 = -1.431 * x
+    de1 = -1.315 * x
+    de2 = 2.431 * x*x
+    fe1 = -1.172 * x
+    dp1 = .653 * x
+    dp2 = -2.864 *x*x
+    fp1 = .975 * x
+    d60 = 13.47*x - 27.13*x*x
+
+    sinfac = om_bar_sq * (ce0 + ce1) + om_bar_sq**2. * (de1 + de2) + om_bar_sq**3. * (fe1)
+    cosfac = om_bar_sq * (cp0 + cp1) + om_bar_sq**2. * (dp1 + dp2 - d60) + om_bar_sq**3. * (fp1)
+
+    factor = 1 + (sinfac)*np.sin(angle)**2 + (cosfac)*np.cos(angle)**2 \
+                + om_bar_sq**2 * d60*np.cos(angle)
+    return factor
+    
+
+
 def recover_radius_mass(r_list, m_list, period, om_bar_sq_target, rtol=5e-4, atol=0):
     """
     Much faster version of recover_radius_mass_slow(*params)
@@ -118,8 +140,8 @@ def recover_radius_mass(r_list, m_list, period, om_bar_sq_target, rtol=5e-4, ato
 
 
 if __name__ == "__main__":
-    r_eq = 15000  # in meters
-    mass = 1.6*1.9885e30  # in kg
+    r_eq = 12000  # in meters
+    mass = 1.4*1.9885e30  # in kg
     period = 1./363
     degrees = [90, 75, 62.5, 52.5, 45, 37.5, 27.5, 15, 0]
     print "Equatorial radius: {} km, mass: {} Msol, spin frequency: {:.1f} Hz\n".format(r_eq*1e-3, mass/1.9885e30, 1/period)
@@ -138,17 +160,22 @@ if __name__ == "__main__":
     print "AlGendy & Morsink 2014 calculations (including slow rotation GR-gravity):"
     for elem in newdata:
         print u"Radius of the star: {:.2f} km,\tdiff: {:.5f},\teff_gravity: {:.3f},\tco-latitudinal angle: {}\u00b0".format(*elem)
-    print "Ellipciticy: {}, e²: {}, relative gravity change: {}".format(1 - newpolar[-1]/newpolar[0], 1 - (newpolar[-1]/newpolar[0])**2, grav[-1]/grav[0])
+    print "Ellipciticy: {}, e²: {}, relative gravity change: {}".format(1 - newpolar[-1]/newpolar[0], (1 - (newpolar[-1]/newpolar[0])**2)**.5, grav[-1]/grav[0])
 
 
-    om_bar_sq = find_x_ombarsq(r_eq, mass, period)[1]
+    x, om_bar_sq = find_x_ombarsq(r_eq, mass, period)
+    fastgrav = calc_grav_14_fast_dimless(x, om_bar_sq, angles)
     eps = 1 - newpolar[-1]/newpolar[0]
     gamma = (2*om_bar_sq + 4*eps) / (1 - om_bar_sq)
     c = newpolar[-1]
     a = newpolar[0]
-    lhs = gamma / 2.
-    rhs = ( (a**2 - c**2)/a**2 )**.5
-    print "LHS: {} RHS: {} LHS/RHS: {} LHS*RHS: {}".format(lhs, rhs, lhs/rhs, lhs*rhs)
+    lhs = gamma / 2.  # Gamma = 2*chi
+    rhs = ( (a**2 - c**2)/a**2 )**.5  # eccentricity
+    newchi = ( (a**2 - c**2)/a**2 )*(4./3)
+    gravcompare = fastgrav[-1] / fastgrav[0]
+#    print "LHS: {} RHS: {} LHS/RHS: {} LHS*RHS: {}".format(lhs, rhs, lhs/rhs, lhs*rhs)
+    print "om_bar_sq: {:.8f} eps: {:.8f}\tLHS: {:.8f} newchi: {:.8f} chi_calc: {:.8f}".format(om_bar_sq, eps, lhs, newchi, 2*rhs*rhs)
+    print "Fast rotation gravity: {:.8f}".format(gravcompare)
 
 
 
